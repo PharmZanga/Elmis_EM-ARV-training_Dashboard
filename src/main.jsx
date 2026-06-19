@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { dashboardData } from "./dashboardData.js";
 import "./styles.css";
@@ -12,6 +12,18 @@ const menuItems = [
 ];
 
 function App() {
+  const [detailPayload, setDetailPayload] = useState(() => readDetailPayload());
+  useEffect(() => {
+    const syncDetailPayload = () => setDetailPayload(readDetailPayload());
+    window.addEventListener("hashchange", syncDetailPayload);
+    return () => window.removeEventListener("hashchange", syncDetailPayload);
+  }, []);
+
+  if (detailPayload) return <DetailPage payload={detailPayload} />;
+  return <DashboardApp />;
+}
+
+function DashboardApp() {
   const periods = useMemo(() => sortPeriods(unique(reportingRows.map((row) => row.period))), []);
   const programs = useMemo(() => unique(reportingRows.map((row) => row.program)).sort(), []);
   const provinces = useMemo(() => unique(reportingRows.map((row) => row.province)).sort(), []);
@@ -358,6 +370,36 @@ function DataTable({ rows, columns, total }) {
   );
 }
 
+function DetailPage({ payload }) {
+  const rows = payload.rows || [];
+  const headers = rows.length ? Object.keys(rows[0]) : [];
+  return (
+    <main className="detail-page">
+      <header className="detail-header">
+        <div>
+          <span className="eyebrow">eLMIS Detail View</span>
+          <h1>{payload.title}</h1>
+          <p>{rows.length.toLocaleString()} record{rows.length === 1 ? "" : "s"}</p>
+        </div>
+        <div className="detail-actions">
+          <button type="button" onClick={() => window.print()}>Print</button>
+          <button type="button" onClick={() => downloadCsv(payload.title, rows)}>Export CSV</button>
+        </div>
+      </header>
+      <section className="detail-table-wrap">
+        <table>
+          <thead><tr>{headers.map((header) => <th key={header}>{header}</th>)}</tr></thead>
+          <tbody>
+            {rows.map((row, index) => (
+              <tr key={index}>{headers.map((header) => <td key={header}>{row[header]}</td>)}</tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
+    </main>
+  );
+}
+
 function PeopleTable({ rows }) {
   return <DataTable rows={rows} columns={["district", "facility", "firstName", "lastName", "phone"]} />;
 }
@@ -556,79 +598,37 @@ function formatCell(value, column) {
 }
 
 function openDetailWindow(title, rows, columns) {
-  const detailWindow = window.open("", "_blank", "width=1200,height=800");
-  if (!detailWindow) return;
-
   const normalizedRows = rows.map((row) => {
     return columns.reduce((record, column) => {
       record[labelize(column)] = formatCell(row[column], column);
       return record;
     }, {});
   });
+  const key = `detail-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  localStorage.setItem(key, JSON.stringify({ title, rows: normalizedRows }));
+  const url = `${window.location.origin}${window.location.pathname}#detail=${encodeURIComponent(key)}`;
+  window.open(url, "_blank", "width=1200,height=800");
+}
 
-  const csv = toCsv(normalizedRows);
-  const tableRows = normalizedRows.map((row) => {
-    return `<tr>${Object.values(row).map((value) => `<td>${escapeHtml(value)}</td>`).join("")}</tr>`;
-  }).join("");
-  const tableHeaders = columns.map((column) => `<th>${escapeHtml(labelize(column))}</th>`).join("");
+function readDetailPayload() {
+  if (!window.location.hash.startsWith("#detail=")) return null;
+  const key = decodeURIComponent(window.location.hash.replace("#detail=", ""));
+  try {
+    const payload = JSON.parse(localStorage.getItem(key) || "null");
+    return payload && Array.isArray(payload.rows) ? payload : { title: "Details", rows: [] };
+  } catch {
+    return { title: "Details", rows: [] };
+  }
+}
 
-  detailWindow.document.write(`
-    <!doctype html>
-    <html lang="en">
-      <head>
-        <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>${escapeHtml(title)}</title>
-        <style>
-          body { margin: 0; font-family: Segoe UI, Arial, sans-serif; color: #14231e; background: #f5f7f6; }
-          header { position: sticky; top: 0; z-index: 2; display: flex; justify-content: space-between; gap: 16px; align-items: center; padding: 18px 22px; background: #053429; color: white; }
-          h1 { margin: 0; font-size: 1.35rem; letter-spacing: 0; }
-          p { margin: 4px 0 0; color: #dff3e8; }
-          .actions { display: flex; gap: 8px; }
-          button { border: 0; border-radius: 6px; padding: 9px 12px; background: #147a46; color: white; font-weight: 800; cursor: pointer; }
-          main { padding: 18px; }
-          .table-wrap { overflow: auto; border: 1px solid #d9e2de; border-radius: 8px; background: white; }
-          table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
-          th { position: sticky; top: 0; background: #edf1ef; color: #053429; padding: 9px 8px; text-align: left; white-space: nowrap; border-bottom: 1px solid #d9e2de; }
-          td { padding: 8px; border-bottom: 1px solid #edf1ef; vertical-align: top; }
-          tr:nth-child(even) td { background: #fafcfb; }
-          @media print { header .actions { display: none; } header { position: static; } main { padding: 0; } }
-        </style>
-      </head>
-      <body>
-        <header>
-          <div>
-            <h1>${escapeHtml(title)}</h1>
-            <p>${rows.length.toLocaleString()} record${rows.length === 1 ? "" : "s"}</p>
-          </div>
-          <div class="actions">
-            <button onclick="window.print()">Print</button>
-            <button id="exportCsv">Export CSV</button>
-          </div>
-        </header>
-        <main>
-          <div class="table-wrap">
-            <table>
-              <thead><tr>${tableHeaders}</tr></thead>
-              <tbody>${tableRows}</tbody>
-            </table>
-          </div>
-        </main>
-        <script>
-          const csv = ${JSON.stringify(csv)};
-          document.getElementById("exportCsv").addEventListener("click", () => {
-            const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = ${JSON.stringify(slugify(title) + ".csv")};
-            link.click();
-            URL.revokeObjectURL(link.href);
-          });
-        </script>
-      </body>
-    </html>
-  `);
-  detailWindow.document.close();
+function downloadCsv(title, rows) {
+  const csv = toCsv(rows);
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = `${slugify(title)}.csv`;
+  link.click();
+  URL.revokeObjectURL(link.href);
 }
 
 function toCsv(rows) {
