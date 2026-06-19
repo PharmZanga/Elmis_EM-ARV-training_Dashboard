@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 90" role="img" aria-labelledby="title desc">
+  <title id="title">Control Tower</title>
+  <desc id="desc">An angular cyan supply chain control tower monogram.</desc>
+  <g fill="none" stroke="#23d2dc" stroke-linecap="square" stroke-linejoin="miter">
+    <path d="M13 25L43 7l16 9-12 7-5-3-17 10v21l10 6V38l17-10 12 7-17 10v31L13 57z" stroke-width="8"/>
+    <path d="M62 31l17-10 28 16v30L79 83 62 73V48l13-8 10 6-11 7v13l6 4 14-8V44L79 35l-10 6z" stroke-width="8"/>
+    <path d="M46 76l14 8 15-9" stroke-width="6"/>
+  </g>
+</svg>

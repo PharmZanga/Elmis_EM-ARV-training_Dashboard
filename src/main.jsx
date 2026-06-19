@@ -4,6 +4,12 @@ import { dashboardData } from "./dashboardData.js";
 import "./styles.css";
 
 const { participants, reportingRows, timelinessRows } = dashboardData;
+const menuItems = [
+  ["executive", "1", "Executive"],
+  ["reports", "2", "eLMIS Reports"],
+  ["training", "3", "Training Linkages"],
+  ["tasks", "4", "Task Follow-ups"],
+];
 
 function App() {
   const periods = useMemo(() => sortPeriods(unique(reportingRows.map((row) => row.period))), []);
@@ -11,7 +17,7 @@ function App() {
   const provinces = useMemo(() => unique(reportingRows.map((row) => row.province)).sort(), []);
   const defaultPeriod = periods.includes("February 2026") ? "February 2026" : periods.at(-1) || "February 2026";
 
-  const [activePage, setActivePage] = useState("kpis");
+  const [activePage, setActivePage] = useState("executive");
   const [selectedPeriod, setSelectedPeriod] = useState(defaultPeriod);
   const [selectedProgram, setSelectedProgram] = useState("All");
   const [selectedProvince, setSelectedProvince] = useState("All");
@@ -46,6 +52,8 @@ function App() {
   const statusRows = useMemo(() => facilityRows(filteredReporting, filteredTimeliness), [filteredReporting, filteredTimeliness]);
   const districtBars = useMemo(() => districtPerformance(filteredReporting), [filteredReporting]);
   const submissionTrend = useMemo(() => reportSubmissionTrend(filteredReporting), [filteredReporting]);
+  const provinceTicker = useMemo(() => provincePerformance(filteredReporting), [filteredReporting]);
+  const followUps = useMemo(() => taskFollowUps(statusRows, filteredTimeliness), [statusRows, filteredTimeliness]);
 
   return (
     <main>
@@ -58,15 +66,28 @@ function App() {
               <h1>eLMIS EM and ARV Training Dashboard</h1>
             </div>
           </div>
-          <nav className="tabs" aria-label="Dashboard pages">
-            <button className={activePage === "kpis" ? "active" : ""} onClick={() => setActivePage("kpis")}>Facility KPIs</button>
-            <button className={activePage === "training" ? "active" : ""} onClick={() => setActivePage("training")}>Training Linkage</button>
-          </nav>
+          <div className="tower-brand">
+            <img src="./nsccu-control-tower-logo.svg" alt="National Supply Chain Coordinating Unit Control Tower" />
+            <span>Control Tower</span>
+          </div>
         </div>
       </header>
 
       <section className="page-shell">
-        <aside className="filters">
+        <aside className="sidebar">
+          <nav className="side-menu" aria-label="Dashboard sections">
+            {menuItems.map(([key, number, label]) => (
+              <button key={key} className={activePage === key ? "active" : ""} onClick={() => setActivePage(key)}>
+                <b>{number}</b>
+                <span>{label}</span>
+              </button>
+            ))}
+          </nav>
+          <div className="sidebar-brand">
+            <img src="./nsccu-control-tower-logo.svg" alt="National Supply Chain Coordinating Unit logo" />
+            <strong>National Supply Chain Coordinating Unit</strong>
+            <span>Control Tower</span>
+          </div>
           <FilterGroup title="Period" items={periods} selected={selectedPeriod} onSelect={setSelectedPeriod} />
           <FilterGroup title="Program" items={["All", ...programs]} selected={selectedProgram} onSelect={setSelectedProgram} />
           <FilterGroup title="Province" items={["All", ...provinces]} selected={selectedProvince} onSelect={setSelectedProvince} />
@@ -80,18 +101,52 @@ function App() {
             <span>{selectedProvince === "All" ? "National" : selectedProvince}</span>
             <span>{selectedDistrict === "All" ? "All Districts" : selectedDistrict}</span>
           </div>
-          {activePage === "kpis" ? (
-            <KpiPage totals={totals} statusRows={statusRows} districtBars={districtBars} submissionTrend={submissionTrend} />
-          ) : (
-            <TrainingPage totals={totals} participants={filteredParticipants} facilityKpis={statusRows} />
-          )}
+          {activePage === "executive" && <ExecutivePage totals={totals} statusRows={statusRows} participants={filteredParticipants} districtBars={districtBars} provinceTicker={provinceTicker} followUps={followUps} />}
+          {activePage === "reports" && <KpiPage totals={totals} statusRows={statusRows} districtBars={districtBars} submissionTrend={submissionTrend} provinceTicker={provinceTicker} />}
+          {activePage === "training" && <TrainingPage totals={totals} participants={filteredParticipants} facilityKpis={statusRows} />}
+          {activePage === "tasks" && <TaskPage totals={totals} followUps={followUps} provinceTicker={provinceTicker} />}
         </section>
       </section>
     </main>
   );
 }
 
-function KpiPage({ totals, statusRows, districtBars, submissionTrend }) {
+function ExecutivePage({ totals, statusRows, participants, districtBars, provinceTicker, followUps }) {
+  const professionCounts = countBy(participants, "profession");
+  const trainingByRole = [
+    { label: "Experts", value: totals.experts },
+    { label: "Superusers", value: totals.superusers },
+    { label: "Users", value: totals.users },
+  ];
+  return (
+    <>
+      <KpiGrid items={[
+        ["Reporting Rate", `${totals.reportingRate.toFixed(1)}%`],
+        ["Timeliness", `${totals.timeliness.toFixed(1)}%`],
+        ["Participants", participants.length],
+        ["Non-Reporting", totals.nonReporting],
+        ["Late Follow-ups", followUps.lateDistricts.length],
+      ]} />
+      <ProvinceTicker values={provinceTicker} />
+      <section className="grid executive-grid">
+        <Panel title="Executive Summary">
+          <div className="summary-copy">
+            <p><b>{totals.reporting.toLocaleString()}</b> of <b>{totals.expected.toLocaleString()}</b> expected reports were submitted for the selected period.</p>
+            <p><b>{totals.nonReporting.toLocaleString()}</b> facility reports need follow-up, while <b>{followUps.lateDistricts.length.toLocaleString()}</b> districts have late-reporting pressure.</p>
+            <p><b>{participants.length.toLocaleString()}</b> trained participants are available across <b>{totals.trainingDistricts}</b> training districts.</p>
+          </div>
+        </Panel>
+        <Panel title="Top Reporting Districts"><BarChart values={districtBars.slice(0, 8)} max={100} suffix="%" /></Panel>
+        <Panel title="Training Role Mix"><BarChart values={trainingByRole} max={Math.max(...trainingByRole.map((item) => item.value), 1)} /></Panel>
+        <Panel title="Profession Mix"><Donut counts={professionCounts} /></Panel>
+        <Panel title="Priority Non-Reporting Facilities"><DataTable rows={followUps.nonReporting.slice(0, 80)} columns={["province", "district", "facility", "program", "task"]} /></Panel>
+        <Panel title="Reporting Status Snapshot"><Pie reporting={totals.reporting} nonReporting={totals.nonReporting} /></Panel>
+      </section>
+    </>
+  );
+}
+
+function KpiPage({ totals, statusRows, districtBars, submissionTrend, provinceTicker }) {
   return (
     <>
       <KpiGrid items={[
@@ -101,6 +156,7 @@ function KpiPage({ totals, statusRows, districtBars, submissionTrend }) {
         ["Timeliness", `${totals.timeliness.toFixed(1)}%`],
         ["Districts", totals.districts],
       ]} />
+      <ProvinceTicker values={provinceTicker} />
       <section className="grid three">
         <Panel title="Reporting Rate by Facility"><DataTable rows={statusRows} columns={["district", "facility", "program", "reportingRate"]} total={`${totals.reportingRate.toFixed(1)}%`} /></Panel>
         <Panel title="Reporting Timeliness"><DataTable rows={statusRows} columns={["district", "program", "timeliness", "status"]} total={`${totals.timeliness.toFixed(1)}%`} /></Panel>
@@ -108,6 +164,26 @@ function KpiPage({ totals, statusRows, districtBars, submissionTrend }) {
         <Panel title="Reporting vs Non-Reporting"><Pie reporting={totals.reporting} nonReporting={totals.nonReporting} /></Panel>
         <Panel title="Report Submission Distribution"><LineChart values={submissionTrend} /></Panel>
         <Panel title="Reporting Rate by District"><BarChart values={districtBars.slice(0, 10)} max={100} suffix="%" /></Panel>
+      </section>
+    </>
+  );
+}
+
+function TaskPage({ totals, followUps, provinceTicker }) {
+  return (
+    <>
+      <KpiGrid items={[
+        ["Open Follow-ups", followUps.nonReporting.length + followUps.lateDistricts.length],
+        ["Facilities Not Reported", followUps.nonReporting.length],
+        ["Late Districts", followUps.lateDistricts.length],
+        ["Late Reports", followUps.lateReports],
+        ["Reporting Rate", `${totals.reportingRate.toFixed(1)}%`],
+      ]} />
+      <ProvinceTicker values={provinceTicker} />
+      <section className="grid task-grid">
+        <Panel title="Facilities That Have Not Reported This Month"><DataTable rows={followUps.nonReporting} columns={["province", "district", "facility", "program", "task"]} /></Panel>
+        <Panel title="Late Reporting Follow-ups"><DataTable rows={followUps.lateDistricts} columns={["province", "district", "program", "expected", "reportedLate", "task"]} /></Panel>
+        <Panel title="Province Reporting Watch"><BarChart values={provinceTicker.slice(0, 10).map((item) => ({ label: item.province, value: item.reportingRate }))} max={100} suffix="%" /></Panel>
       </section>
     </>
   );
@@ -159,6 +235,19 @@ function FilterGroup({ title, items, selected, onSelect }) {
       <h3>{title}</h3>
       <div>{items.map((item) => <button key={item} onClick={() => onSelect(item)} className={selected === item ? "checked" : ""}><span />{item}</button>)}</div>
     </section>
+  );
+}
+
+function ProvinceTicker({ values }) {
+  const items = values.length ? values : [{ province: "No province data", reportingRate: 0, reporting: 0, expected: 0 }];
+  const tickerText = items.map((item) => `${item.province}: ${item.reportingRate.toFixed(1)}% reporting (${item.reporting.toLocaleString()}/${item.expected.toLocaleString()})`).join("   |   ");
+  return (
+    <div className="ticker" aria-label="Province reporting ticker">
+      <div className="ticker-track">
+        <span>{tickerText}</span>
+        <span>{tickerText}</span>
+      </div>
+    </div>
   );
 }
 
@@ -256,6 +345,42 @@ function districtPerformance(rows) {
     const reporting = items.filter((item) => isReporting(item)).length;
     return { label: district, value: (reporting / items.length) * 100 };
   }).sort((a, b) => b.value - a.value);
+}
+
+function provincePerformance(rows) {
+  return Object.entries(groupBy(rows, "province")).map(([province, items]) => {
+    const reporting = items.filter((item) => isReporting(item)).length;
+    return {
+      province,
+      reporting,
+      expected: items.length,
+      reportingRate: items.length ? (reporting / items.length) * 100 : 0,
+    };
+  }).sort((a, b) => a.province.localeCompare(b.province));
+}
+
+function taskFollowUps(facilityKpis, timelyRows) {
+  const nonReporting = facilityKpis
+    .filter((row) => row.status === "NON_REPORTING")
+    .map((row) => ({
+      ...row,
+      task: "Call facility focal person and confirm report submission barrier",
+    }))
+    .sort((a, b) => a.province.localeCompare(b.province) || a.district.localeCompare(b.district) || a.facility.localeCompare(b.facility));
+
+  const lateDistricts = timelyRows
+    .filter((row) => Number(row.reportedLate || 0) > 0)
+    .map((row) => ({
+      ...row,
+      task: "Follow up late submissions and reinforce reporting deadline",
+    }))
+    .sort((a, b) => b.reportedLate - a.reportedLate);
+
+  return {
+    nonReporting,
+    lateDistricts,
+    lateReports: lateDistricts.reduce((sum, row) => sum + Number(row.reportedLate || 0), 0),
+  };
 }
 
 function reportSubmissionTrend(rows) {
