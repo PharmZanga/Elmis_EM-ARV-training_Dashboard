@@ -9,6 +9,18 @@ const menuItems = [
   ["reports", "2", "eLMIS Reports"],
   ["training", "3", "Training Linkages"],
   ["tasks", "4", "Task Follow-ups"],
+  ["trainings", "5", "Trainings"],
+];
+
+const trainingHighlights = [
+  ["kafue-experts-group.jpg", "Kafue Experts Training", "National eLMIS experts group photo"],
+  ["expert-room-wide.jpg", "Hands-on Expert Session", "Participants working through system exercises"],
+  ["expert-classroom.jpg", "Classroom Engagement", "Expert trainees reviewing reporting workflows"],
+  ["elmis-presentation.jpg", "eLMIS Orientation", "Core benefits and reporting expectations"],
+  ["supply-chain-slide.jpg", "Supply Chain Linkages", "National supply chain information flow discussion"],
+  ["support-training-panel.jpg", "Support Training Panel", "Facilitators supporting implementation planning"],
+  ["field-support-session.jpg", "Facility Mentorship", "On-site support with facility teams"],
+  ["facility-mentorship.jpg", "Commodity Room Support", "Practical follow-up at facility level"],
 ];
 
 function App() {
@@ -66,6 +78,10 @@ function DashboardApp() {
   const submissionTrend = useMemo(() => reportSubmissionTrend(filteredReporting), [filteredReporting]);
   const provinceTicker = useMemo(() => provincePerformance(filteredReporting), [filteredReporting]);
   const followUps = useMemo(() => taskFollowUps(statusRows, filteredTimeliness), [statusRows, filteredTimeliness]);
+  const provinceCards = useMemo(() => provinceTrainingPerformance(provinceTicker, filteredParticipants), [provinceTicker, filteredParticipants]);
+  const monthlyTrends = useMemo(() => monthlyProgramTrends(reportingRows, selectedProvince, selectedDistrict), [selectedProvince, selectedDistrict]);
+  const insights = useMemo(() => buildInsights(provinceTicker, statusRows, filteredParticipants), [provinceTicker, statusRows, filteredParticipants]);
+  const priorityRows = useMemo(() => priorityActions(followUps, provinceTicker, filteredParticipants), [followUps, provinceTicker, filteredParticipants]);
 
   return (
     <main>
@@ -113,17 +129,18 @@ function DashboardApp() {
             <span>{selectedProvince === "All" ? "National" : selectedProvince}</span>
             <span>{selectedDistrict === "All" ? "All Districts" : selectedDistrict}</span>
           </div>
-          {activePage === "executive" && <ExecutivePage totals={totals} statusRows={statusRows} participants={filteredParticipants} districtBars={districtBars} provinceTicker={provinceTicker} followUps={followUps} />}
-          {activePage === "reports" && <KpiPage totals={totals} statusRows={statusRows} districtBars={districtBars} submissionTrend={submissionTrend} provinceTicker={provinceTicker} />}
+          {activePage === "executive" && <ExecutivePage totals={totals} statusRows={statusRows} participants={filteredParticipants} districtBars={districtBars} provinceTicker={provinceTicker} followUps={followUps} provinceCards={provinceCards} monthlyTrends={monthlyTrends} insights={insights} priorityRows={priorityRows} />}
+          {activePage === "reports" && <KpiPage totals={totals} statusRows={statusRows} districtBars={districtBars} submissionTrend={submissionTrend} provinceTicker={provinceTicker} provinceCards={provinceCards} monthlyTrends={monthlyTrends} insights={insights} />}
           {activePage === "training" && <TrainingPage totals={totals} participants={filteredParticipants} facilityKpis={statusRows} />}
-          {activePage === "tasks" && <TaskPage totals={totals} statusRows={statusRows} followUps={followUps} provinceTicker={provinceTicker} />}
+          {activePage === "tasks" && <TaskPage totals={totals} statusRows={statusRows} followUps={followUps} provinceTicker={provinceTicker} priorityRows={priorityRows} insights={insights} />}
+          {activePage === "trainings" && <TrainingsPage totals={totals} participants={filteredParticipants} provinceCards={provinceCards} />}
         </section>
       </section>
     </main>
   );
 }
 
-function ExecutivePage({ totals, statusRows, participants, districtBars, provinceTicker, followUps }) {
+function ExecutivePage({ totals, statusRows, participants, districtBars, provinceTicker, followUps, provinceCards, monthlyTrends, insights, priorityRows }) {
   const professionCounts = countBy(participants, "profession");
   const trainingByRole = [
     { label: "Experts", value: totals.experts },
@@ -139,6 +156,7 @@ function ExecutivePage({ totals, statusRows, participants, districtBars, provinc
         ["Non-Reporting", totals.nonReporting],
         ["Late Follow-ups", followUps.lateDistricts.length],
       ]} />
+      <InsightStrip insights={insights} />
       <ProvinceTicker values={provinceTicker} />
       <section className="grid executive-grid">
         <Panel title="Executive Summary">
@@ -151,17 +169,19 @@ function ExecutivePage({ totals, statusRows, participants, districtBars, provinc
             <p>Ultimately, the dashboard contributes to improved supply chain performance and the uninterrupted availability of essential medicines and antiretroviral commodities across the country.</p>
           </div>
         </Panel>
+        <Panel title="Zambia Provincial Performance"><ProvincePerformanceCards values={provinceCards} /></Panel>
+        <Panel title="Monthly EM and ARV Reporting Trends"><MonthlyTrendChart values={monthlyTrends} /></Panel>
+        <Panel title="Priority Actions"><DataTable rows={priorityRows} columns={["issue", "provinceDistrict", "actionRequired", "responsible", "dueDate", "status"]} /></Panel>
         <Panel title="Top Reporting Districts"><BarChart values={districtBars.slice(0, 8)} max={100} suffix="%" /></Panel>
         <Panel title="Training Role Mix"><BarChart values={trainingByRole} max={Math.max(...trainingByRole.map((item) => item.value), 1)} /></Panel>
         <Panel title="Profession Mix"><Donut counts={professionCounts} /></Panel>
-        <Panel title="Priority Non-Reporting Facilities"><DataTable rows={followUps.nonReporting.slice(0, 80)} columns={["province", "district", "facility", "program", "task"]} /></Panel>
         <Panel title="Reporting Status Snapshot"><Pie reporting={totals.reporting} nonReporting={totals.nonReporting} /></Panel>
       </section>
     </>
   );
 }
 
-function KpiPage({ totals, statusRows, districtBars, submissionTrend, provinceTicker }) {
+function KpiPage({ totals, statusRows, districtBars, submissionTrend, provinceTicker, provinceCards, monthlyTrends, insights }) {
   const reportedRows = statusRows.filter((row) => row.status === "REPORTING");
   const nonReportingRows = statusRows.filter((row) => row.status === "NON_REPORTING");
   const districtRows = districtBars.map((row) => ({
@@ -209,8 +229,11 @@ function KpiPage({ totals, statusRows, districtBars, submissionTrend, provinceTi
   return (
     <>
       <KpiGrid items={reportCards} />
+      <InsightStrip insights={insights} />
       <ProvinceTicker values={provinceTicker} />
       <section className="grid three">
+        <Panel title="Zambia Provincial Performance"><ProvincePerformanceCards values={provinceCards} /></Panel>
+        <Panel title="Monthly EM and ARV Reporting Trends"><MonthlyTrendChart values={monthlyTrends} /></Panel>
         <Panel title="Reporting Rate by Facility"><DataTable rows={statusRows} columns={["district", "facility", "program", "reportingRate"]} total={`${totals.reportingRate.toFixed(1)}%`} /></Panel>
         <Panel title="Reporting Timeliness"><DataTable rows={statusRows} columns={["district", "program", "timeliness", "status"]} total={`${totals.timeliness.toFixed(1)}%`} /></Panel>
         <Panel title="Reporting Status"><DataTable rows={statusRows} columns={["province", "district", "facility", "status"]} /></Panel>
@@ -222,7 +245,7 @@ function KpiPage({ totals, statusRows, districtBars, submissionTrend, provinceTi
   );
 }
 
-function TaskPage({ totals, statusRows, followUps, provinceTicker }) {
+function TaskPage({ totals, statusRows, followUps, provinceTicker, priorityRows, insights }) {
   const taskCards = [
     {
       label: "Open Follow-ups",
@@ -264,11 +287,67 @@ function TaskPage({ totals, statusRows, followUps, provinceTicker }) {
   return (
     <>
       <KpiGrid items={taskCards} />
+      <InsightStrip insights={insights} />
       <ProvinceTicker values={provinceTicker} />
       <section className="grid task-grid">
+        <Panel title="Priority Actions"><DataTable rows={priorityRows} columns={["issue", "provinceDistrict", "actionRequired", "responsible", "dueDate", "status"]} /></Panel>
         <Panel title="Facilities That Have Not Reported This Month"><DataTable rows={followUps.nonReporting} columns={["province", "district", "facility", "program", "task"]} /></Panel>
         <Panel title="Late Reporting Follow-ups"><DataTable rows={followUps.lateDistricts} columns={["province", "district", "program", "expected", "reportedLate", "task"]} /></Panel>
         <Panel title="Province Reporting Watch"><BarChart values={provinceTicker.slice(0, 10).map((item) => ({ label: item.province, value: item.reportingRate }))} max={100} suffix="%" /></Panel>
+      </section>
+    </>
+  );
+}
+
+function TrainingsPage({ totals, participants, provinceCards }) {
+  const trainingByProvince = provinceCards
+    .filter((item) => item.training > 0)
+    .sort((a, b) => b.training - a.training)
+    .slice(0, 10)
+    .map((item) => ({ label: item.province, value: item.training }));
+  const targetGap = provinceCards.filter((item) => item.training < 5).length;
+
+  return (
+    <>
+      <KpiGrid items={[
+        ["Total Trained", participants.length],
+        ["Experts Trained", totals.experts],
+        ["Superusers Trained", totals.superusers],
+        ["Users Trained", totals.users],
+        ["Training Districts", totals.trainingDistricts],
+      ]} />
+      <section className="training-hero panel">
+        <div>
+          <span className="eyebrow">Photo Highlights</span>
+          <h2>Kafue Experts Training</h2>
+          <p>Hands-on eLMIS capacity building sessions connecting trained users to facility reporting performance, late reporting follow-up, and supply chain visibility.</p>
+        </div>
+        <div className="training-hero-stat">
+          <strong>{targetGap}</strong>
+          <span>provinces need additional training coverage</span>
+        </div>
+      </section>
+      <section className="photo-grid">
+        {trainingHighlights.map(([file, title, caption]) => (
+          <figure key={file} className="photo-card">
+            <img src={`./training-highlights/${file}`} alt={title} />
+            <figcaption>
+              <b>{title}</b>
+              <span>{caption}</span>
+            </figcaption>
+          </figure>
+        ))}
+      </section>
+      <section className="grid three">
+        <Panel title="Training by Province"><BarChart values={trainingByProvince} max={Math.max(...trainingByProvince.map((item) => item.value), 1)} /></Panel>
+        <Panel title="Province Reporting and Training"><ProvincePerformanceCards values={provinceCards} /></Panel>
+        <Panel title="Training Insight Labels">
+          <div className="insight-list">
+            <p>Training coverage has improved but remains below target in selected provinces.</p>
+            <p>Expert and superuser sessions should be prioritized where reporting or timeliness remains below the national average.</p>
+            <p>Facility mentorship photos document the support model used to close reporting gaps after classroom training.</p>
+          </div>
+        </Panel>
       </section>
     </>
   );
@@ -356,6 +435,39 @@ function ProvinceTicker({ values }) {
   );
 }
 
+function InsightStrip({ insights }) {
+  if (!insights.length) return null;
+  return (
+    <section className="insight-strip" aria-label="Dashboard insights">
+      {insights.map((insight) => (
+        <article key={insight.text} className={`insight ${insight.tone}`}>
+          <b>{insight.label}</b>
+          <span>{insight.text}</span>
+        </article>
+      ))}
+    </section>
+  );
+}
+
+function ProvincePerformanceCards({ values }) {
+  const sorted = [...values].sort((a, b) => a.reportingRate - b.reportingRate);
+  return (
+    <div className="province-card-grid">
+      {sorted.map((item) => (
+        <article className="province-card" key={item.province}>
+          <div>
+            <b>{item.province}</b>
+            <span>{item.training.toLocaleString()} trained</span>
+          </div>
+          <strong>{item.reportingRate.toFixed(1)}%</strong>
+          <small>{item.reporting.toLocaleString()} of {item.expected.toLocaleString()} reports received</small>
+          <div className="mini-meter"><i style={{ width: `${Math.min(item.reportingRate, 100)}%` }} /></div>
+        </article>
+      ))}
+    </div>
+  );
+}
+
 function DataTable({ rows, columns, total }) {
   const visibleRows = rows.slice(0, 250);
   return (
@@ -432,6 +544,30 @@ function LineChart({ values }) {
   );
 }
 
+function MonthlyTrendChart({ values }) {
+  const series = [
+    { key: "Essential Medicine", label: "EM", color: "#147a46" },
+    { key: "Antiretroviral Drugs", label: "ARV", color: "#195e8f" },
+  ];
+  const toPoints = (key) => values.map((item, index) => {
+    const x = (index / Math.max(values.length - 1, 1)) * 100;
+    const y = 94 - ((item[key] || 0) / 100) * 84;
+    return `${x},${y}`;
+  }).join(" ");
+
+  return (
+    <div className="trend-wrap">
+      <div className="trend-legend">
+        {series.map((item) => <span key={item.key}><i style={{ background: item.color }} />{item.label}</span>)}
+      </div>
+      <svg className="trend-chart" viewBox="0 0 100 100" preserveAspectRatio="none">
+        {series.map((item) => <polyline key={item.key} points={toPoints(item.key)} style={{ stroke: item.color }} />)}
+      </svg>
+      <div className="chart-axis">{values.map((item) => <span key={item.label}>{item.label}</span>)}</div>
+    </div>
+  );
+}
+
 function BarChart({ values, max, suffix = "" }) {
   return <div className="bar-chart">{values.map((item) => <div className="bar-item" key={item.label}><span style={{ height: `${Math.max((item.value / max) * 100, 2)}%` }}><b>{item.value.toFixed(0)}{suffix}</b></span><small>{item.label}</small></div>)}</div>;
 }
@@ -492,6 +628,107 @@ function provincePerformance(rows) {
       reportingRate: items.length ? (reporting / items.length) * 100 : 0,
     };
   }).sort((a, b) => a.province.localeCompare(b.province));
+}
+
+function provinceTrainingPerformance(provinceStats, traineeRows) {
+  const trainingByProvince = countBy(traineeRows, "province");
+  return provinceStats.map((item) => ({
+    ...item,
+    training: trainingByProvince[item.province] || 0,
+  }));
+}
+
+function monthlyProgramTrends(rows, province, district) {
+  const programs = ["Essential Medicine", "Antiretroviral Drugs"];
+  const scopedRows = rows.filter((row) => (
+    (province === "All" || row.province === province) &&
+    (district === "All" || row.district === district) &&
+    programs.includes(row.program)
+  ));
+  return sortPeriods(unique(scopedRows.map((row) => row.period))).map((period) => {
+    const record = { label: period.replace(" 2026", "").replace(" 2025", "") };
+    programs.forEach((program) => {
+      const items = scopedRows.filter((row) => row.period === period && row.program === program);
+      const reporting = items.filter((row) => isReporting(row)).length;
+      record[program] = items.length ? (reporting / items.length) * 100 : 0;
+    });
+    return record;
+  });
+}
+
+function buildInsights(provinceStats, statusRows, traineeRows) {
+  if (!provinceStats.length) return [];
+  const lowest = [...provinceStats].sort((a, b) => a.reportingRate - b.reportingRate)[0];
+  const arvProvince = provincePerformance(statusRows.filter((row) => row.program === "Antiretroviral Drugs")).sort((a, b) => a.reportingRate - b.reportingRate)[0] || lowest;
+  const trainingByProvince = countBy(traineeRows, "province");
+  const lowestTraining = [...provinceStats].sort((a, b) => (trainingByProvince[a.province] || 0) - (trainingByProvince[b.province] || 0))[0];
+  return [
+    {
+      label: "Reporting gap",
+      tone: lowest.reportingRate < 95 ? "risk" : "good",
+      text: `${lowest.province} requires follow-up due to ${lowest.reportingRate.toFixed(1)}% reporting.`,
+    },
+    {
+      label: "ARV focus",
+      tone: arvProvince.reportingRate < 95 ? "warning" : "good",
+      text: `${arvProvince.province} requires follow-up due to low ARV reporting.`,
+    },
+    {
+      label: "Training coverage",
+      tone: "info",
+      text: `Training coverage has improved but remains below target in ${lowestTraining.province}.`,
+    },
+  ];
+}
+
+function priorityActions(followUps, provinceStats, traineeRows) {
+  const dueSoon = addDays(new Date(), 7);
+  const dueLater = addDays(new Date(), 14);
+  const lowestProvince = [...provinceStats].sort((a, b) => a.reportingRate - b.reportingRate)[0];
+  const trainingByProvince = countBy(traineeRows, "province");
+  const lowestTraining = [...provinceStats].sort((a, b) => (trainingByProvince[a.province] || 0) - (trainingByProvince[b.province] || 0))[0];
+  const firstNonReporting = followUps.nonReporting[0];
+  const firstLate = followUps.lateDistricts[0];
+  return [
+    firstNonReporting && {
+      issue: "Facility has not reported",
+      provinceDistrict: `${firstNonReporting.province} / ${firstNonReporting.district}`,
+      actionRequired: "Call facility focal person and confirm submission barrier",
+      responsible: "District eLMIS focal point",
+      dueDate: dueSoon,
+      status: "Open",
+    },
+    firstLate && {
+      issue: "Late reporting",
+      provinceDistrict: `${firstLate.province} / ${firstLate.district}`,
+      actionRequired: "Review late submissions and reinforce reporting deadline",
+      responsible: "Provincial pharmacist",
+      dueDate: dueSoon,
+      status: "In progress",
+    },
+    lowestProvince && {
+      issue: "Low reporting performance",
+      provinceDistrict: lowestProvince.province,
+      actionRequired: "Run targeted control tower review with district teams",
+      responsible: "NSCCU Control Tower",
+      dueDate: dueLater,
+      status: lowestProvince.reportingRate >= 95 ? "Monitoring" : "Open",
+    },
+    lowestTraining && {
+      issue: "Training coverage gap",
+      provinceDistrict: lowestTraining.province,
+      actionRequired: "Schedule refresher training and superuser mentorship",
+      responsible: "Training coordinator",
+      dueDate: dueLater,
+      status: "Planned",
+    },
+  ].filter(Boolean);
+}
+
+function addDays(date, days) {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next.toISOString().slice(0, 10);
 }
 
 function taskFollowUps(facilityKpis, timelyRows) {
