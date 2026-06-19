@@ -1,146 +1,124 @@
 import React, { useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
+import { dashboardData } from "./dashboardData.js";
 import "./styles.css";
 
-const periods = ["January 2025", "February 2025", "March 2025", "April 2025", "May 2025", "June 2025", "February 2026"];
-const programs = ["Essential Medicine", "Antiretroviral Drugs"];
-
-const facilities = [
-  { district: "Chililabombwe", province: "Copperbelt", facility: "Chililabombwe DHO", period: "February 2026", program: "Essential Medicine", reportingRate: 100, timeliness: 100, status: "REPORTING", received: 48, expected: 48, trained: 6, issuesResolved: 0 },
-  { district: "Chililabombwe", province: "Copperbelt", facility: "Chililabombwe District Hospital", period: "February 2026", program: "Essential Medicine", reportingRate: 100, timeliness: 96, status: "REPORTING", received: 31, expected: 31, trained: 8, issuesResolved: 0 },
-  { district: "Chililabombwe", province: "Copperbelt", facility: "Chimfunshi Rural Health Center", period: "February 2026", program: "Essential Medicine", reportingRate: 100, timeliness: 98, status: "REPORTING", received: 24, expected: 24, trained: 4, issuesResolved: 0 },
-  { district: "Chingola", province: "Copperbelt", facility: "Chingola DHO", period: "February 2026", program: "Essential Medicine", reportingRate: 100, timeliness: 100, status: "REPORTING", received: 42, expected: 42, trained: 5, issuesResolved: 0 },
-  { district: "Kalulushi", province: "Copperbelt", facility: "Kalulushi District Hospital", period: "February 2026", program: "Essential Medicine", reportingRate: 100, timeliness: 100, status: "REPORTING", received: 34, expected: 34, trained: 4, issuesResolved: 0 },
-  { district: "Kitwe", province: "Copperbelt", facility: "Kitwe DHO", period: "February 2026", program: "Essential Medicine", reportingRate: 100, timeliness: 100, status: "REPORTING", received: 55, expected: 55, trained: 12, issuesResolved: 0 },
-  { district: "Kitwe", province: "Copperbelt", facility: "Buchi Main Clinic", period: "February 2026", program: "Essential Medicine", reportingRate: 100, timeliness: 95, status: "REPORTING", received: 27, expected: 27, trained: 5, issuesResolved: 0 },
-  { district: "Luanshya", province: "Copperbelt", facility: "MoH Luanshya", period: "February 2026", program: "Antiretroviral Drugs", reportingRate: 100, timeliness: 97, status: "REPORTING", received: 28, expected: 28, trained: 4, issuesResolved: 0 },
-  { district: "Lufwanyama", province: "Copperbelt", facility: "Lufwanyama DHO", period: "February 2026", program: "Antiretroviral Drugs", reportingRate: 100, timeliness: 98, status: "REPORTING", received: 23, expected: 23, trained: 3, issuesResolved: 0 },
-  { district: "Masaiti", province: "Copperbelt", facility: "Masaiti DHO", period: "February 2026", program: "Essential Medicine", reportingRate: 100, timeliness: 99, status: "REPORTING", received: 43, expected: 43, trained: 8, issuesResolved: 0 }
-];
-
-const trainees = [
-  { role: "Expert", district: "Chililabombwe", facility: "MoH Luanshya", firstName: "Deborah", phone: "964441246", profession: "Biomedical Scientist" },
-  { role: "Expert", district: "Kitwe", facility: "Kitwe DHO", firstName: "Norah", phone: "972924626", profession: "Pharmacist" },
-  { role: "Expert", district: "Ndola", facility: "Ndola DHO", firstName: "Lorent", phone: "974172062", profession: "Medical Laboratory" },
-  { role: "Expert", district: "Ndola", facility: "DHO", firstName: "Dina", phone: "770131052", profession: "ICT" },
-  { role: "Superuser", district: "Ndola", facility: "ADCH", firstName: "KAFULA", phone: "974984487", profession: "Pharmacy Technologist" },
-  { role: "Superuser", district: "Ndola", facility: "ADCH", firstName: "Pretty", phone: "967130886", profession: "Pharmacist" },
-  { role: "Superuser", district: "Kitwe", facility: "Buchi Main Clinic", firstName: "Benson", phone: "962972197", profession: "Clinical Officer" },
-  { role: "Superuser", district: "Kitwe", facility: "BULANGILILO UHC", firstName: "CHITA MUSA", phone: "968632362", profession: "Biomedical Scientist" },
-  { role: "User", district: "Mpongwe", facility: "Chisapa HP", firstName: "EVELYN", phone: "762557818", profession: "Nurse" },
-  { role: "User", district: "Kitwe", facility: "ITIMPI clinic", firstName: "Susan makate", phone: "967356882", profession: "Medical Laboratory" },
-  { role: "User", district: "Ndola", facility: "Kabushi Clinic", firstName: "Ennety", phone: "973076692", profession: "Pharmacy Technologist" },
-  { role: "User", district: "Ndola", facility: "Kaloko Clinic", firstName: "Memory", phone: "961132039", profession: "Pharmacist" },
-  ...Array.from({ length: 47 }, (_, index) => {
-    const base = facilities[index % facilities.length];
-    const professions = ["Pharmacist", "Pharmacy Technologist", "Medical Laboratory", "Biomedical Scientist", "ICT", "BMS", "Clinical Officer", "Nurse"];
-    return {
-      role: "Superuser",
-      district: base.district,
-      facility: base.facility,
-      firstName: `Participant ${index + 1}`,
-      phone: `97${(2000000 + index * 1379).toString().slice(0, 7)}`,
-      profession: professions[index % professions.length]
-    };
-  })
-];
+const { participants, reportingRows, timelinessRows } = dashboardData;
 
 function App() {
+  const periods = useMemo(() => sortPeriods(unique(reportingRows.map((row) => row.period))), []);
+  const programs = useMemo(() => unique(reportingRows.map((row) => row.program)).sort(), []);
+  const provinces = useMemo(() => unique(reportingRows.map((row) => row.province)).sort(), []);
+  const defaultPeriod = periods.includes("February 2026") ? "February 2026" : periods.at(-1) || "February 2026";
+
   const [activePage, setActivePage] = useState("kpis");
-  const [selectedPeriod, setSelectedPeriod] = useState("February 2026");
+  const [selectedPeriod, setSelectedPeriod] = useState(defaultPeriod);
   const [selectedProgram, setSelectedProgram] = useState("All");
-  const [selectedProvince, setSelectedProvince] = useState("Copperbelt");
+  const [selectedProvince, setSelectedProvince] = useState("All");
   const [selectedDistrict, setSelectedDistrict] = useState("All");
 
-  const provinces = [...new Set(facilities.map((facility) => facility.province))];
-  const districts = [...new Set(facilities.filter((facility) => selectedProvince === "All" || facility.province === selectedProvince).map((facility) => facility.district))];
+  const districts = useMemo(() => {
+    return unique(
+      reportingRows
+        .filter((row) => selectedProvince === "All" || row.province === selectedProvince)
+        .map((row) => row.district)
+    ).sort();
+  }, [selectedProvince]);
 
-  const filteredFacilities = useMemo(() => {
-    return facilities.filter((facility) => {
-      return (
-        facility.period === selectedPeriod &&
-        (selectedProgram === "All" || facility.program === selectedProgram) &&
-        (selectedProvince === "All" || facility.province === selectedProvince) &&
-        (selectedDistrict === "All" || facility.district === selectedDistrict)
-      );
-    });
+  const filteredReporting = useMemo(() => {
+    return reportingRows.filter((row) => matchesFilters(row, selectedPeriod, selectedProgram, selectedProvince, selectedDistrict));
   }, [selectedPeriod, selectedProgram, selectedProvince, selectedDistrict]);
 
-  const filteredTrainees = useMemo(() => {
-    const facilityNames = new Set(filteredFacilities.map((facility) => facility.facility));
-    return trainees.filter((trainee) => selectedDistrict === "All" || trainee.district === selectedDistrict || facilityNames.has(trainee.facility));
-  }, [filteredFacilities, selectedDistrict]);
+  const filteredTimeliness = useMemo(() => {
+    return timelinessRows.filter((row) => matchesFilters(row, selectedPeriod, selectedProgram, selectedProvince, selectedDistrict));
+  }, [selectedPeriod, selectedProgram, selectedProvince, selectedDistrict]);
 
-  const totals = getTotals(filteredFacilities, filteredTrainees);
+  const filteredParticipants = useMemo(() => {
+    return participants.filter((person) => {
+      return (
+        (selectedProvince === "All" || person.province === selectedProvince) &&
+        (selectedDistrict === "All" || person.district === selectedDistrict)
+      );
+    });
+  }, [selectedProvince, selectedDistrict]);
+
+  const totals = useMemo(() => getTotals(filteredReporting, filteredTimeliness, filteredParticipants), [filteredReporting, filteredTimeliness, filteredParticipants]);
+  const statusRows = useMemo(() => facilityRows(filteredReporting, filteredTimeliness), [filteredReporting, filteredTimeliness]);
+  const districtBars = useMemo(() => districtPerformance(filteredReporting), [filteredReporting]);
+  const submissionTrend = useMemo(() => reportSubmissionTrend(filteredReporting), [filteredReporting]);
 
   return (
     <main>
-      <div className="shell">
-        <header className="dashboard-header">
-          <img src="./zambia-coat-of-arms.svg" alt="Zambia Coat of Arms" />
-          <h1>MoH eLMIS EM and ARV Training Dashboard</h1>
-        </header>
-
-        <nav className="tabs" aria-label="Dashboard pages">
-          <button className={activePage === "kpis" ? "active" : ""} onClick={() => setActivePage("kpis")}>Facility KPIs</button>
-          <button className={activePage === "training" ? "active" : ""} onClick={() => setActivePage("training")}>Training Linkage</button>
-        </nav>
-
-        <section className="layout">
-          <div className="content">
-            {activePage === "kpis" ? (
-              <KpiPage totals={totals} facilities={filteredFacilities} />
-            ) : (
-              <TrainingPage totals={totals} facilities={filteredFacilities} trainees={filteredTrainees} />
-            )}
+      <header className="masthead">
+        <div className="brand-row">
+          <div className="brand-side">
+            <div className="crest"><img src="./zambia-coat-of-arms.svg" alt="Zambia Coat of Arms" /></div>
+            <div>
+              <span className="eyebrow">Ministry of Health Zambia</span>
+              <h1>eLMIS EM and ARV Training Dashboard</h1>
+            </div>
           </div>
-          <aside className="filters">
-            <FilterGroup title="Period" items={periods} selected={selectedPeriod} onSelect={setSelectedPeriod} />
-            <FilterGroup title="Program" items={["All", ...programs]} selected={selectedProgram} onSelect={setSelectedProgram} />
-            <FilterGroup title="Province" items={["All", ...provinces, "Central", "Eastern", "Luapula", "Lusaka", "Muchinga"]} selected={selectedProvince} onSelect={setSelectedProvince} />
-            <FilterGroup title="District" items={["All", ...districts]} selected={selectedDistrict} onSelect={setSelectedDistrict} />
-          </aside>
+          <nav className="tabs" aria-label="Dashboard pages">
+            <button className={activePage === "kpis" ? "active" : ""} onClick={() => setActivePage("kpis")}>Facility KPIs</button>
+            <button className={activePage === "training" ? "active" : ""} onClick={() => setActivePage("training")}>Training Linkage</button>
+          </nav>
+        </div>
+      </header>
+
+      <section className="page-shell">
+        <aside className="filters">
+          <FilterGroup title="Period" items={periods} selected={selectedPeriod} onSelect={setSelectedPeriod} />
+          <FilterGroup title="Program" items={["All", ...programs]} selected={selectedProgram} onSelect={setSelectedProgram} />
+          <FilterGroup title="Province" items={["All", ...provinces]} selected={selectedProvince} onSelect={setSelectedProvince} />
+          <FilterGroup title="District" items={["All", ...districts]} selected={selectedDistrict} onSelect={setSelectedDistrict} />
+        </aside>
+
+        <section className="content">
+          <div className="context-strip">
+            <span>{selectedPeriod}</span>
+            <span>{selectedProgram}</span>
+            <span>{selectedProvince === "All" ? "National" : selectedProvince}</span>
+            <span>{selectedDistrict === "All" ? "All Districts" : selectedDistrict}</span>
+          </div>
+          {activePage === "kpis" ? (
+            <KpiPage totals={totals} statusRows={statusRows} districtBars={districtBars} submissionTrend={submissionTrend} />
+          ) : (
+            <TrainingPage totals={totals} participants={filteredParticipants} facilityKpis={statusRows} />
+          )}
         </section>
-      </div>
+      </section>
     </main>
   );
 }
 
-function KpiPage({ totals, facilities }) {
+function KpiPage({ totals, statusRows, districtBars, submissionTrend }) {
   return (
     <>
       <KpiGrid items={[
-        ["Reporting Rate", `${totals.reportingRate.toFixed(2)}%`],
-        ["Superusers Trained", totals.superusers],
-        ["Experts Trained", totals.experts],
-        ["Users Trained", totals.users],
-        ["Districts Trained", totals.districts]
+        ["Reporting Rate", `${totals.reportingRate.toFixed(1)}%`],
+        ["Reports Received", totals.reporting],
+        ["Expected Reports", totals.expected],
+        ["Timeliness", `${totals.timeliness.toFixed(1)}%`],
+        ["Districts", totals.districts],
       ]} />
-      <div className="province-bar">Copperbelt&nbsp;&nbsp; {totals.reportingRate.toFixed(2)}%</div>
       <section className="grid three">
-        <Panel title="Reporting Rate"><DataTable rows={facilities} columns={["district", "period", "facility", "reportingRate"]} total={`${totals.reportingRate.toFixed(2)}%`} /></Panel>
-        <Panel title="Reporting Timeliness"><DataTable rows={facilities} columns={["district", "period", "program", "timeliness"]} total={`${totals.timeliness.toFixed(2)}%`} /></Panel>
-        <Panel title="Reporting Status"><DataTable rows={facilities} columns={["district", "period", "facility", "status"]} /></Panel>
-        <Panel title="Reporting vs Non-Reporting"><Pie value={totals.reporting} total={totals.expected} label={`${totals.reporting} (${Math.round(totals.reportingRate)}%)`} /></Panel>
-        <Panel title="Report Submission Distribution"><LineChart values={[1, 2, 3, 5, 13, 58, 4, 38, 8, 1]} /></Panel>
-        <Panel title="Reporting Trend by Month"><BarChart values={[{ label: "Feb 2026", value: totals.reporting }]} max={400} /></Panel>
+        <Panel title="Reporting Rate by Facility"><DataTable rows={statusRows} columns={["district", "facility", "program", "reportingRate"]} total={`${totals.reportingRate.toFixed(1)}%`} /></Panel>
+        <Panel title="Reporting Timeliness"><DataTable rows={statusRows} columns={["district", "program", "timeliness", "status"]} total={`${totals.timeliness.toFixed(1)}%`} /></Panel>
+        <Panel title="Reporting Status"><DataTable rows={statusRows} columns={["province", "district", "facility", "status"]} /></Panel>
+        <Panel title="Reporting vs Non-Reporting"><Pie reporting={totals.reporting} nonReporting={totals.nonReporting} /></Panel>
+        <Panel title="Report Submission Distribution"><LineChart values={submissionTrend} /></Panel>
+        <Panel title="Reporting Rate by District"><BarChart values={districtBars.slice(0, 10)} max={100} suffix="%" /></Panel>
       </section>
     </>
   );
 }
 
-function TrainingPage({ totals, facilities, trainees }) {
-  const experts = trainees.filter((person) => person.role === "Expert");
-  const superusers = trainees.filter((person) => person.role === "Superuser");
-  const users = trainees.filter((person) => person.role === "User");
-  const professionCounts = countBy(trainees, "profession");
-  const facilityTraining = facilities.map((facility) => ({
-    facility: facility.facility,
-    district: facility.district,
-    trained: trainees.filter((person) => person.facility === facility.facility || person.district === facility.district).length,
-    reportingRate: `${facility.reportingRate.toFixed(2)}%`,
-    timeliness: `${facility.timeliness.toFixed(2)}%`
-  }));
+function TrainingPage({ totals, participants, facilityKpis }) {
+  const experts = participants.filter((person) => person.role === "Expert");
+  const superusers = participants.filter((person) => person.role === "Superuser");
+  const users = participants.filter((person) => person.role === "User");
+  const professionCounts = countBy(participants, "profession");
+  const facilityTraining = linkTrainingToFacilities(facilityKpis, participants);
 
   return (
     <>
@@ -149,12 +127,12 @@ function TrainingPage({ totals, facilities, trainees }) {
         ["Superusers Trained", totals.superusers],
         ["Experts Trained", totals.experts],
         ["Users Trained", totals.users],
-        ["Districts Trained", totals.districts]
+        ["Training Districts", totals.trainingDistricts],
       ]} />
       <section className="grid training-grid">
         <div className="stack">
           <Panel title="List of Experts"><PeopleTable rows={experts} /></Panel>
-          <Panel title="List of Superusers"><PeopleTable rows={superusers.slice(0, 8)} /></Panel>
+          <Panel title="List of Superusers"><PeopleTable rows={superusers} /></Panel>
           <Panel title="List of Users"><PeopleTable rows={users} /></Panel>
         </div>
         <div className="stack">
@@ -168,7 +146,7 @@ function TrainingPage({ totals, facilities, trainees }) {
 }
 
 function KpiGrid({ items }) {
-  return <section className="kpi-grid">{items.map(([label, value]) => <article className="kpi" key={label}><strong>{value}</strong><span>{label}</span></article>)}</section>;
+  return <section className="kpi-grid">{items.map(([label, value]) => <article className="kpi" key={label}><span>{label}</span><strong>{value}</strong></article>)}</section>;
 }
 
 function Panel({ title, children }) {
@@ -185,77 +163,168 @@ function FilterGroup({ title, items, selected, onSelect }) {
 }
 
 function DataTable({ rows, columns, total }) {
+  const visibleRows = rows.slice(0, 250);
   return (
     <div className="table-wrap">
       <table>
         <thead><tr>{columns.map((column) => <th key={column}>{labelize(column)}</th>)}</tr></thead>
-        <tbody>{rows.map((row, index) => <tr key={`${row.facility || row.firstName}-${index}`}>{columns.map((column) => <td key={column}>{formatCell(row[column], column)}</td>)}</tr>)}</tbody>
+        <tbody>{visibleRows.map((row, index) => <tr key={`${row.facility || row.firstName}-${index}`}>{columns.map((column) => <td key={column}>{formatCell(row[column], column)}</td>)}</tr>)}</tbody>
         {total && <tfoot><tr><td colSpan={columns.length - 1}>Total</td><td>{total}</td></tr></tfoot>}
       </table>
+      {rows.length > visibleRows.length && <p className="table-note">Showing first {visibleRows.length.toLocaleString()} of {rows.length.toLocaleString()} records</p>}
     </div>
   );
 }
 
 function PeopleTable({ rows }) {
-  return <DataTable rows={rows} columns={["district", "facility", "firstName", "phone"]} />;
+  return <DataTable rows={rows} columns={["district", "facility", "firstName", "lastName", "phone"]} />;
 }
 
-function Pie({ value, total, label }) {
-  const percent = total ? value / total : 0;
-  return <div className="pie-card"><div className="solid-pie" style={{ "--percent": `${percent * 100}%` }} /><div><b>Reporting Status</b><p><span className="dot green" />REPORTING</p><strong>{label}</strong></div></div>;
+function Pie({ reporting, nonReporting }) {
+  const total = reporting + nonReporting;
+  const reportingPercent = total ? (reporting / total) * 100 : 0;
+  return (
+    <div className="pie-card">
+      <div className="solid-pie" style={{ "--reporting": `${reportingPercent}%` }} />
+      <div className="legend">
+        <b>Reporting Status</b>
+        <span><i style={{ background: "#147a46" }} />REPORTING {reporting.toLocaleString()}</span>
+        <span><i style={{ background: "#b42318" }} />NON_REPORTING {nonReporting.toLocaleString()}</span>
+      </div>
+    </div>
+  );
 }
 
 function LineChart({ values }) {
-  const max = Math.max(...values);
-  const points = values.map((value, index) => `${(index / (values.length - 1)) * 100},${100 - (value / max) * 92}`).join(" ");
-  return <svg className="chart" viewBox="0 0 100 100" preserveAspectRatio="none"><polyline points={points} /><g>{values.map((value, index) => <text key={index} x={(index / (values.length - 1)) * 100} y={98 - (value / max) * 92}>{[1, 13, 58, 4, 38].includes(value) ? value : ""}</text>)}</g></svg>;
+  const max = Math.max(...values.map((item) => item.value), 1);
+  const points = values.map((item, index) => `${(index / Math.max(values.length - 1, 1)) * 100},${96 - (item.value / max) * 88}`).join(" ");
+  return (
+    <div className="line-wrap">
+      <svg className="chart" viewBox="0 0 100 100" preserveAspectRatio="none">
+        <polyline points={points} />
+      </svg>
+      <div className="chart-axis">{values.slice(0, 6).map((item) => <span key={item.label}>{item.label}</span>)}</div>
+    </div>
+  );
 }
 
-function BarChart({ values, max }) {
-  return <div className="bar-chart">{values.map((item) => <div className="bar-item" key={item.label}><span style={{ height: `${(item.value / max) * 100}%` }}><b>{item.value}</b></span><small>{item.label}</small></div>)}</div>;
+function BarChart({ values, max, suffix = "" }) {
+  return <div className="bar-chart">{values.map((item) => <div className="bar-item" key={item.label}><span style={{ height: `${Math.max((item.value / max) * 100, 2)}%` }}><b>{item.value.toFixed(0)}{suffix}</b></span><small>{item.label}</small></div>)}</div>;
 }
 
 function StackedBar({ counts }) {
-  const entries = Object.entries(counts);
-  const total = entries.reduce((sum, [, value]) => sum + value, 0);
-  return <div className="stacked"><div className="stacked-bar">{entries.map(([name, value], index) => <span key={name} style={{ height: `${(value / total) * 100}%`, background: colors[index % colors.length] }}>{value > 4 ? value : ""}</span>)}</div><div className="legend">{entries.map(([name], index) => <span key={name}><i style={{ background: colors[index % colors.length] }} />{name}</span>)}</div></div>;
+  const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 8);
+  const total = entries.reduce((sum, [, value]) => sum + value, 0) || 1;
+  return <div className="stacked"><div className="stacked-bar">{entries.map(([name, value], index) => <span key={name} style={{ height: `${(value / total) * 100}%`, background: colors[index % colors.length] }}>{value}</span>)}</div><div className="legend">{entries.map(([name, value], index) => <span key={name}><i style={{ background: colors[index % colors.length] }} />{name} <b>{value}</b></span>)}</div></div>;
 }
 
 function Donut({ counts }) {
-  const entries = Object.entries(counts);
-  const total = entries.reduce((sum, [, value]) => sum + value, 0);
+  const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 8);
+  const total = entries.reduce((sum, [, value]) => sum + value, 0) || 1;
   let offset = 0;
-  const segments = entries.map(([name, value], index) => {
+  const segments = entries.map(([, value], index) => {
     const slice = (value / total) * 100;
     const segment = `${colors[index % colors.length]} ${offset}% ${offset + slice}%`;
     offset += slice;
     return segment;
   }).join(", ");
-  return <div className="donut-row"><div className="donut" style={{ background: `conic-gradient(${segments})` }} /><div className="legend">{entries.slice(0, 6).map(([name, value], index) => <span key={name}><i style={{ background: colors[index % colors.length] }} />{name} <b>{value}</b></span>)}</div></div>;
+  return <div className="donut-row"><div className="donut" style={{ background: `conic-gradient(${segments})` }} /><div className="legend">{entries.map(([name, value], index) => <span key={name}><i style={{ background: colors[index % colors.length] }} />{name} <b>{value}</b></span>)}</div></div>;
 }
 
-function getTotals(facilityRows, traineeRows) {
-  const expected = facilityRows.reduce((sum, row) => sum + row.expected, 0);
-  const reporting = facilityRows.reduce((sum, row) => sum + row.received, 0);
+function matchesFilters(row, period, program, province, district) {
+  return (
+    row.period === period &&
+    (program === "All" || row.program === program) &&
+    (province === "All" || row.province === province) &&
+    (district === "All" || row.district === district)
+  );
+}
+
+function facilityRows(reportRows, timelyRows) {
+  const timelyByDistrict = new Map(timelyRows.map((row) => [`${row.district}|${row.program}`, row.timeliness]));
+  return reportRows.map((row) => ({
+    ...row,
+    sourceStatus: row.status,
+    status: isReporting(row) ? "REPORTING" : "NON_REPORTING",
+    reportingRate: isReporting(row) ? 100 : 0,
+    timeliness: timelyByDistrict.get(`${row.district}|${row.program}`) ?? "",
+  }));
+}
+
+function districtPerformance(rows) {
+  return Object.entries(groupBy(rows, "district")).map(([district, items]) => {
+    const reporting = items.filter((item) => isReporting(item)).length;
+    return { label: district, value: (reporting / items.length) * 100 };
+  }).sort((a, b) => b.value - a.value);
+}
+
+function reportSubmissionTrend(rows) {
+  const counts = {};
+  rows.filter((row) => isReporting(row) && row.dateReceived && row.dateReceived !== "-").forEach((row) => {
+    counts[row.dateReceived] = (counts[row.dateReceived] || 0) + 1;
+  });
+  return Object.entries(counts).sort(([a], [b]) => a.localeCompare(b)).slice(-14).map(([label, value]) => ({ label: label.slice(5), value }));
+}
+
+function linkTrainingToFacilities(facilityKpis, traineeRows) {
+  const byDistrict = countBy(traineeRows, "district");
+  const byFacility = countBy(traineeRows, "facility");
+  return facilityKpis.slice(0, 500).map((facility) => ({
+    district: facility.district,
+    facility: facility.facility,
+    trained: (byFacility[facility.facility] || 0) + (byDistrict[facility.district] || 0),
+    reportingRate: facility.reportingRate,
+    timeliness: facility.timeliness,
+  })).sort((a, b) => b.trained - a.trained);
+}
+
+function getTotals(reportRows, timelyRows, traineeRows) {
+  const expected = reportRows.length;
+  const reporting = reportRows.filter((row) => isReporting(row)).length;
+  const timelyExpected = timelyRows.reduce((sum, row) => sum + row.expected, 0);
+  const timelyOnTime = timelyRows.reduce((sum, row) => sum + row.reportedOnTime, 0);
   return {
     reportingRate: expected ? (reporting / expected) * 100 : 0,
-    timeliness: average(facilityRows.map((row) => row.timeliness)),
+    timeliness: timelyExpected ? (timelyOnTime / timelyExpected) * 100 : 0,
     reporting,
+    nonReporting: expected - reporting,
     expected,
     superusers: traineeRows.filter((person) => person.role === "Superuser").length,
     experts: traineeRows.filter((person) => person.role === "Expert").length,
     users: traineeRows.filter((person) => person.role === "User").length,
-    districts: new Set(facilityRows.map((row) => row.district)).size,
-    issuesResolved: facilityRows.reduce((sum, row) => sum + row.issuesResolved, 0)
+    districts: unique(reportRows.map((row) => row.district)).length,
+    trainingDistricts: unique(traineeRows.map((row) => row.district)).length,
+    issuesResolved: traineeRows.reduce((sum, row) => sum + Number(row.issuesResolved || 0), 0),
   };
 }
 
-function countBy(rows, key) {
-  return rows.reduce((counts, row) => ({ ...counts, [row[key]]: (counts[row[key]] || 0) + 1 }), {});
+function isReporting(row) {
+  return String(row.status || "").trim().toUpperCase() !== "NON_REPORTING";
 }
 
-function average(values) {
-  return values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : 0;
+function unique(values) {
+  return [...new Set(values.filter(Boolean))];
+}
+
+function groupBy(rows, key) {
+  return rows.reduce((groups, row) => {
+    const value = row[key] || "Unknown";
+    groups[value] = groups[value] || [];
+    groups[value].push(row);
+    return groups;
+  }, {});
+}
+
+function countBy(rows, key) {
+  return rows.reduce((counts, row) => {
+    const value = row[key] || "Not Specified";
+    counts[value] = (counts[value] || 0) + 1;
+    return counts;
+  }, {});
+}
+
+function sortPeriods(values) {
+  return values.sort((a, b) => new Date(`1 ${a}`) - new Date(`1 ${b}`));
 }
 
 function labelize(value) {
@@ -263,10 +332,11 @@ function labelize(value) {
 }
 
 function formatCell(value, column) {
-  if (["reportingRate", "timeliness"].includes(column) && typeof value === "number") return `${value.toFixed(2)}%`;
-  return value;
+  if (["reportingRate", "timeliness"].includes(column) && typeof value === "number") return `${value.toFixed(1)}%`;
+  if (typeof value === "number") return value.toLocaleString();
+  return value || "";
 }
 
-const colors = ["#7a007d", "#ec4eab", "#28a745", "#6850a3", "#d9b300", "#e86d33", "#1f8dec", "#1630a2"];
+const colors = ["#147a46", "#195e8f", "#a96e00", "#7a3fb1", "#b42318", "#00857a", "#637381", "#d65f2a"];
 
 createRoot(document.getElementById("root")).render(<App />);
