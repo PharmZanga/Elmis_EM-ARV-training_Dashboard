@@ -104,7 +104,7 @@ function App() {
           {activePage === "executive" && <ExecutivePage totals={totals} statusRows={statusRows} participants={filteredParticipants} districtBars={districtBars} provinceTicker={provinceTicker} followUps={followUps} />}
           {activePage === "reports" && <KpiPage totals={totals} statusRows={statusRows} districtBars={districtBars} submissionTrend={submissionTrend} provinceTicker={provinceTicker} />}
           {activePage === "training" && <TrainingPage totals={totals} participants={filteredParticipants} facilityKpis={statusRows} />}
-          {activePage === "tasks" && <TaskPage totals={totals} followUps={followUps} provinceTicker={provinceTicker} />}
+          {activePage === "tasks" && <TaskPage totals={totals} statusRows={statusRows} followUps={followUps} provinceTicker={provinceTicker} />}
         </section>
       </section>
     </main>
@@ -150,15 +150,53 @@ function ExecutivePage({ totals, statusRows, participants, districtBars, provinc
 }
 
 function KpiPage({ totals, statusRows, districtBars, submissionTrend, provinceTicker }) {
+  const reportedRows = statusRows.filter((row) => row.status === "REPORTING");
+  const nonReportingRows = statusRows.filter((row) => row.status === "NON_REPORTING");
+  const districtRows = districtBars.map((row) => ({
+    district: row.label,
+    reportingRate: row.value,
+  }));
+  const reportCards = [
+    {
+      label: "Reporting Rate",
+      value: `${totals.reportingRate.toFixed(1)}%`,
+      title: "Reporting Rate Full Details",
+      rows: statusRows,
+      columns: ["province", "district", "facility", "program", "status", "reportingRate"],
+    },
+    {
+      label: "Facilities Reported",
+      value: totals.reporting,
+      title: "Facilities Reported Full Details",
+      rows: reportedRows,
+      columns: ["province", "district", "facility", "program", "status", "dateReceived"],
+    },
+    {
+      label: "Non Reporting",
+      value: totals.nonReporting,
+      title: "Non Reporting Facility Details",
+      rows: nonReportingRows,
+      columns: ["province", "district", "facility", "program", "status"],
+    },
+    {
+      label: "Timeliness",
+      value: `${totals.timeliness.toFixed(1)}%`,
+      title: "Reporting Timeliness Full Details",
+      rows: statusRows,
+      columns: ["province", "district", "facility", "program", "timeliness", "status"],
+    },
+    {
+      label: "Districts",
+      value: totals.districts,
+      title: "District Reporting Rate Details",
+      rows: districtRows,
+      columns: ["district", "reportingRate"],
+    },
+  ];
+
   return (
     <>
-      <KpiGrid items={[
-        ["Reporting Rate", `${totals.reportingRate.toFixed(1)}%`],
-        ["Reports Received", totals.reporting],
-        ["Expected Reports", totals.expected],
-        ["Timeliness", `${totals.timeliness.toFixed(1)}%`],
-        ["Districts", totals.districts],
-      ]} />
+      <KpiGrid items={reportCards} />
       <ProvinceTicker values={provinceTicker} />
       <section className="grid three">
         <Panel title="Reporting Rate by Facility"><DataTable rows={statusRows} columns={["district", "facility", "program", "reportingRate"]} total={`${totals.reportingRate.toFixed(1)}%`} /></Panel>
@@ -172,16 +210,48 @@ function KpiPage({ totals, statusRows, districtBars, submissionTrend, provinceTi
   );
 }
 
-function TaskPage({ totals, followUps, provinceTicker }) {
+function TaskPage({ totals, statusRows, followUps, provinceTicker }) {
+  const taskCards = [
+    {
+      label: "Open Follow-ups",
+      value: followUps.nonReporting.length + followUps.lateDistricts.length,
+      title: "All Open Follow-ups",
+      rows: [...followUps.nonReporting, ...followUps.lateDistricts],
+      columns: ["province", "district", "facility", "program", "reportedLate", "task"],
+    },
+    {
+      label: "Facilities Not Reported",
+      value: followUps.nonReporting.length,
+      title: "Facilities That Have Not Reported This Month",
+      rows: followUps.nonReporting,
+      columns: ["province", "district", "facility", "program", "task"],
+    },
+    {
+      label: "Late Districts",
+      value: followUps.lateDistricts.length,
+      title: "Late Reporting District Details",
+      rows: followUps.lateDistricts,
+      columns: ["province", "district", "program", "expected", "reportedLate", "task"],
+    },
+    {
+      label: "Late Reports",
+      value: followUps.lateReports,
+      title: "Late Report Follow-up Details",
+      rows: followUps.lateDistricts,
+      columns: ["province", "district", "program", "expected", "reportedLate", "task"],
+    },
+    {
+      label: "Reporting Rate",
+      value: `${totals.reportingRate.toFixed(1)}%`,
+      title: "Reporting Rate Follow-up Context",
+      rows: statusRows,
+      columns: ["province", "district", "facility", "program", "status", "reportingRate"],
+    },
+  ];
+
   return (
     <>
-      <KpiGrid items={[
-        ["Open Follow-ups", followUps.nonReporting.length + followUps.lateDistricts.length],
-        ["Facilities Not Reported", followUps.nonReporting.length],
-        ["Late Districts", followUps.lateDistricts.length],
-        ["Late Reports", followUps.lateReports],
-        ["Reporting Rate", `${totals.reportingRate.toFixed(1)}%`],
-      ]} />
+      <KpiGrid items={taskCards} />
       <ProvinceTicker values={provinceTicker} />
       <section className="grid task-grid">
         <Panel title="Facilities That Have Not Reported This Month"><DataTable rows={followUps.nonReporting} columns={["province", "district", "facility", "program", "task"]} /></Panel>
@@ -225,7 +295,25 @@ function TrainingPage({ totals, participants, facilityKpis }) {
 }
 
 function KpiGrid({ items }) {
-  return <section className="kpi-grid">{items.map(([label, value]) => <article className="kpi" key={label}><span>{label}</span><strong>{value}</strong></article>)}</section>;
+  return (
+    <section className="kpi-grid">
+      {items.map((item) => {
+        const card = Array.isArray(item) ? { label: item[0], value: item[1] } : item;
+        const clickable = card.rows && card.columns;
+        return (
+          <button
+            type="button"
+            className={`kpi ${clickable ? "clickable" : ""}`}
+            key={card.label}
+            onClick={clickable ? () => openDetailWindow(card.title || card.label, card.rows, card.columns) : undefined}
+          >
+            <span>{card.label}</span>
+            <strong>{card.value}</strong>
+          </button>
+        );
+      })}
+    </section>
+  );
 }
 
 function Panel({ title, children }) {
@@ -235,8 +323,10 @@ function Panel({ title, children }) {
 function FilterGroup({ title, items, selected, onSelect }) {
   return (
     <section className="filter-card">
-      <h3>{title}</h3>
-      <div>{items.map((item) => <button key={item} onClick={() => onSelect(item)} className={selected === item ? "checked" : ""}><span />{item}</button>)}</div>
+      <label htmlFor={`filter-${title}`}>{title}</label>
+      <select id={`filter-${title}`} value={selected} onChange={(event) => onSelect(event.target.value)}>
+        {items.map((item) => <option key={item} value={item}>{item}</option>)}
+      </select>
     </section>
   );
 }
@@ -463,6 +553,109 @@ function formatCell(value, column) {
   if (["reportingRate", "timeliness"].includes(column) && typeof value === "number") return `${value.toFixed(1)}%`;
   if (typeof value === "number") return value.toLocaleString();
   return value || "";
+}
+
+function openDetailWindow(title, rows, columns) {
+  const detailWindow = window.open("", "_blank", "width=1200,height=800");
+  if (!detailWindow) return;
+
+  const normalizedRows = rows.map((row) => {
+    return columns.reduce((record, column) => {
+      record[labelize(column)] = formatCell(row[column], column);
+      return record;
+    }, {});
+  });
+
+  const csv = toCsv(normalizedRows);
+  const tableRows = normalizedRows.map((row) => {
+    return `<tr>${Object.values(row).map((value) => `<td>${escapeHtml(value)}</td>`).join("")}</tr>`;
+  }).join("");
+  const tableHeaders = columns.map((column) => `<th>${escapeHtml(labelize(column))}</th>`).join("");
+
+  detailWindow.document.write(`
+    <!doctype html>
+    <html lang="en">
+      <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>${escapeHtml(title)}</title>
+        <style>
+          body { margin: 0; font-family: Segoe UI, Arial, sans-serif; color: #14231e; background: #f5f7f6; }
+          header { position: sticky; top: 0; z-index: 2; display: flex; justify-content: space-between; gap: 16px; align-items: center; padding: 18px 22px; background: #053429; color: white; }
+          h1 { margin: 0; font-size: 1.35rem; letter-spacing: 0; }
+          p { margin: 4px 0 0; color: #dff3e8; }
+          .actions { display: flex; gap: 8px; }
+          button { border: 0; border-radius: 6px; padding: 9px 12px; background: #147a46; color: white; font-weight: 800; cursor: pointer; }
+          main { padding: 18px; }
+          .table-wrap { overflow: auto; border: 1px solid #d9e2de; border-radius: 8px; background: white; }
+          table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+          th { position: sticky; top: 0; background: #edf1ef; color: #053429; padding: 9px 8px; text-align: left; white-space: nowrap; border-bottom: 1px solid #d9e2de; }
+          td { padding: 8px; border-bottom: 1px solid #edf1ef; vertical-align: top; }
+          tr:nth-child(even) td { background: #fafcfb; }
+          @media print { header .actions { display: none; } header { position: static; } main { padding: 0; } }
+        </style>
+      </head>
+      <body>
+        <header>
+          <div>
+            <h1>${escapeHtml(title)}</h1>
+            <p>${rows.length.toLocaleString()} record${rows.length === 1 ? "" : "s"}</p>
+          </div>
+          <div class="actions">
+            <button onclick="window.print()">Print</button>
+            <button id="exportCsv">Export CSV</button>
+          </div>
+        </header>
+        <main>
+          <div class="table-wrap">
+            <table>
+              <thead><tr>${tableHeaders}</tr></thead>
+              <tbody>${tableRows}</tbody>
+            </table>
+          </div>
+        </main>
+        <script>
+          const csv = ${JSON.stringify(csv)};
+          document.getElementById("exportCsv").addEventListener("click", () => {
+            const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = ${JSON.stringify(slugify(title) + ".csv")};
+            link.click();
+            URL.revokeObjectURL(link.href);
+          });
+        </script>
+      </body>
+    </html>
+  `);
+  detailWindow.document.close();
+}
+
+function toCsv(rows) {
+  if (!rows.length) return "";
+  const headers = Object.keys(rows[0]);
+  return [
+    headers.join(","),
+    ...rows.map((row) => headers.map((header) => csvEscape(row[header])).join(",")),
+  ].join("\n");
+}
+
+function csvEscape(value) {
+  const text = String(value ?? "");
+  return /[",\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
+}
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function slugify(value) {
+  return String(value).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "details";
 }
 
 const colors = ["#147a46", "#195e8f", "#a96e00", "#7a3fb1", "#b42318", "#00857a", "#637381", "#d65f2a"];
