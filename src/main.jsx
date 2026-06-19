@@ -68,7 +68,10 @@ function App() {
           </div>
           <div className="tower-brand">
             <img src="./nsccu-control-tower-logo.svg" alt="National Supply Chain Coordinating Unit Control Tower" />
-            <span>Control Tower</span>
+            <div>
+              <strong>National Supply Chain Coordinating Unit</strong>
+              <span>Control Tower</span>
+            </div>
           </div>
         </div>
       </header>
@@ -83,18 +86,15 @@ function App() {
               </button>
             ))}
           </nav>
-          <div className="sidebar-brand">
-            <img src="./nsccu-control-tower-logo.svg" alt="National Supply Chain Coordinating Unit logo" />
-            <strong>National Supply Chain Coordinating Unit</strong>
-            <span>Control Tower</span>
-          </div>
-          <FilterGroup title="Period" items={periods} selected={selectedPeriod} onSelect={setSelectedPeriod} />
-          <FilterGroup title="Program" items={["All", ...programs]} selected={selectedProgram} onSelect={setSelectedProgram} />
-          <FilterGroup title="Province" items={["All", ...provinces]} selected={selectedProvince} onSelect={setSelectedProvince} />
-          <FilterGroup title="District" items={["All", ...districts]} selected={selectedDistrict} onSelect={setSelectedDistrict} />
         </aside>
 
         <section className="content">
+          <div className="page-filters" aria-label="Dashboard filters">
+            <FilterGroup title="Period" items={periods} selected={selectedPeriod} onSelect={setSelectedPeriod} />
+            <FilterGroup title="Program" items={["All", ...programs]} selected={selectedProgram} onSelect={setSelectedProgram} />
+            <FilterGroup title="Province" items={["All", ...provinces]} selected={selectedProvince} onSelect={setSelectedProvince} />
+            <FilterGroup title="District" items={["All", ...districts]} selected={selectedDistrict} onSelect={setSelectedDistrict} />
+          </div>
           <div className="context-strip">
             <span>{selectedPeriod}</span>
             <span>{selectedProgram}</span>
@@ -131,9 +131,12 @@ function ExecutivePage({ totals, statusRows, participants, districtBars, provinc
       <section className="grid executive-grid">
         <Panel title="Executive Summary">
           <div className="summary-copy">
-            <p><b>{totals.reporting.toLocaleString()}</b> of <b>{totals.expected.toLocaleString()}</b> expected reports were submitted for the selected period.</p>
-            <p><b>{totals.nonReporting.toLocaleString()}</b> facility reports need follow-up, while <b>{followUps.lateDistricts.length.toLocaleString()}</b> districts have late-reporting pressure.</p>
-            <p><b>{participants.length.toLocaleString()}</b> trained participants are available across <b>{totals.trainingDistricts}</b> training districts.</p>
+            <p>The eLMIS Essential Medicines (EM), Antiretroviral (ARV) Reporting and Training Dashboard provides a comprehensive overview of reporting performance, user engagement, and capacity-building efforts across Zambia's health supply chain.</p>
+            <p>The dashboard serves as a strategic tool for monitoring data submission rates, identifying reporting gaps, tracking system utilization, and assessing training coverage among health workers.</p>
+            <p>By consolidating reporting and training indicators into a single platform, the dashboard enables national, provincial, district, and facility-level managers to monitor compliance with reporting requirements, evaluate data quality, and identify areas requiring targeted support.</p>
+            <p>The dashboard further facilitates evidence-based decision-making by highlighting trends in reporting performance and user participation in eLMIS training programs.</p>
+            <p>The platform supports ongoing efforts to strengthen the national supply chain by improving data visibility, promoting accountability, enhancing user competency, and ensuring timely availability of reliable logistics information for forecasting, quantification, procurement, and commodity management.</p>
+            <p>Ultimately, the dashboard contributes to improved supply chain performance and the uninterrupted availability of essential medicines and antiretroviral commodities across the country.</p>
           </div>
         </Panel>
         <Panel title="Top Reporting Districts"><BarChart values={districtBars.slice(0, 8)} max={100} suffix="%" /></Panel>
