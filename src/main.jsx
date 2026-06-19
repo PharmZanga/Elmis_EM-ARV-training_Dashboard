@@ -606,8 +606,7 @@ function openDetailWindow(title, rows, columns) {
   });
   const key = `detail-${Date.now()}-${Math.random().toString(16).slice(2)}`;
   localStorage.setItem(key, JSON.stringify({ title, rows: normalizedRows }));
-  const url = `${window.location.origin}${window.location.pathname}#detail=${encodeURIComponent(key)}`;
-  window.open(url, "_blank", "width=1200,height=800");
+  window.location.hash = `detail=${encodeURIComponent(key)}`;
 }
 
 function readDetailPayload() {
