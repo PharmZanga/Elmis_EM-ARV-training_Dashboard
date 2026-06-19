@@ -159,7 +159,7 @@ function ExecutivePage({ totals, statusRows, participants, districtBars, provinc
       <InsightStrip insights={insights} />
       <ProvinceTicker values={provinceTicker} />
       <section className="grid executive-grid">
-        <Panel title="Executive Summary">
+        <Panel title="Executive Summary" className="summary-landscape">
           <div className="summary-copy">
             <p>The eLMIS Essential Medicines (EM), Antiretroviral (ARV) Reporting and Training Dashboard provides a comprehensive overview of reporting performance, user engagement, and capacity-building efforts across Zambia's health supply chain.</p>
             <p>The dashboard serves as a strategic tool for monitoring data submission rates, identifying reporting gaps, tracking system utilization, and assessing training coverage among health workers.</p>
@@ -169,7 +169,7 @@ function ExecutivePage({ totals, statusRows, participants, districtBars, provinc
             <p>Ultimately, the dashboard contributes to improved supply chain performance and the uninterrupted availability of essential medicines and antiretroviral commodities across the country.</p>
           </div>
         </Panel>
-        <Panel title="Zambia Provincial Performance"><ProvincePerformanceCards values={provinceCards} /></Panel>
+        <Panel title="Zambia Provincial Performance" className="map-panel"><ProvincePerformanceMap values={provinceCards} /></Panel>
         <Panel title="Monthly EM and ARV Reporting Trends"><MonthlyTrendChart values={monthlyTrends} /></Panel>
         <Panel title="Priority Actions"><DataTable rows={priorityRows} columns={["issue", "provinceDistrict", "actionRequired", "responsible", "dueDate", "status"]} /></Panel>
         <Panel title="Top Reporting Districts"><BarChart values={districtBars.slice(0, 8)} max={100} suffix="%" /></Panel>
@@ -232,14 +232,16 @@ function KpiPage({ totals, statusRows, districtBars, submissionTrend, provinceTi
       <InsightStrip insights={insights} />
       <ProvinceTicker values={provinceTicker} />
       <section className="grid three">
-        <Panel title="Zambia Provincial Performance"><ProvincePerformanceCards values={provinceCards} /></Panel>
-        <Panel title="Monthly EM and ARV Reporting Trends"><MonthlyTrendChart values={monthlyTrends} /></Panel>
         <Panel title="Reporting Rate by Facility"><DataTable rows={statusRows} columns={["district", "facility", "program", "reportingRate"]} total={`${totals.reportingRate.toFixed(1)}%`} /></Panel>
         <Panel title="Reporting Timeliness"><DataTable rows={statusRows} columns={["district", "program", "timeliness", "status"]} total={`${totals.timeliness.toFixed(1)}%`} /></Panel>
         <Panel title="Reporting Status"><DataTable rows={statusRows} columns={["province", "district", "facility", "status"]} /></Panel>
         <Panel title="Reporting vs Non-Reporting"><Pie reporting={totals.reporting} nonReporting={totals.nonReporting} /></Panel>
         <Panel title="Report Submission Distribution"><LineChart values={submissionTrend} /></Panel>
         <Panel title="Reporting Rate by District"><BarChart values={districtBars.slice(0, 10)} max={100} suffix="%" /></Panel>
+      </section>
+      <section className="map-trend-row">
+        <Panel title="Zambia Provincial Performance" className="map-panel"><ProvincePerformanceMap values={provinceCards} /></Panel>
+        <Panel title="Monthly EM and ARV Reporting Trends"><MonthlyTrendChart values={monthlyTrends} /></Panel>
       </section>
     </>
   );
@@ -407,8 +409,8 @@ function KpiGrid({ items }) {
   );
 }
 
-function Panel({ title, children }) {
-  return <article className="panel"><h2>{title}</h2>{children}</article>;
+function Panel({ title, children, className = "" }) {
+  return <article className={`panel ${className}`.trim()}><h2>{title}</h2>{children}</article>;
 }
 
 function FilterGroup({ title, items, selected, onSelect }) {
@@ -466,6 +468,51 @@ function ProvincePerformanceCards({ values }) {
       ))}
     </div>
   );
+}
+
+function ProvincePerformanceMap({ values }) {
+  const byProvince = Object.fromEntries(values.map((item) => [item.province, item]));
+  const provinces = [
+    { name: "North Western", label: "North-Western", x: 190, y: 180, w: 168, h: 122, path: "M98 148 L230 116 L334 168 L312 270 L168 292 L84 232 Z" },
+    { name: "Copperbelt", x: 332, y: 122, w: 122, h: 82, path: "M330 118 L430 122 L468 182 L420 230 L326 208 L302 158 Z" },
+    { name: "Luapula", x: 486, y: 104, w: 112, h: 116, path: "M472 116 L548 82 L618 142 L592 240 L500 232 L458 166 Z" },
+    { name: "Northern", x: 560, y: 70, w: 144, h: 102, path: "M550 58 L696 70 L732 154 L652 216 L578 176 L532 108 Z" },
+    { name: "Muchinga", x: 596, y: 198, w: 116, h: 132, path: "M604 190 L704 170 L742 282 L684 386 L606 320 L566 246 Z" },
+    { name: "Western", x: 170, y: 338, w: 154, h: 156, path: "M90 290 L230 276 L326 350 L294 510 L150 520 L80 424 Z" },
+    { name: "Central", x: 382, y: 292, w: 148, h: 112, path: "M324 252 L468 226 L566 294 L532 410 L388 414 L308 336 Z" },
+    { name: "Lusaka", x: 500, y: 424, w: 90, h: 64, path: "M506 398 L586 392 L618 444 L568 500 L500 472 L474 430 Z" },
+    { name: "Eastern", x: 642, y: 390, w: 116, h: 130, path: "M618 338 L724 286 L778 398 L724 534 L620 512 L584 424 Z" },
+    { name: "Southern", x: 404, y: 474, w: 166, h: 96, path: "M292 444 L458 424 L584 508 L532 582 L366 568 L278 514 Z" },
+  ];
+  return (
+    <div className="zambia-map-wrap">
+      <svg className="zambia-map" viewBox="40 40 780 560" role="img" aria-label="Zambia provincial reporting performance map">
+        {provinces.map((province) => {
+          const item = byProvince[province.name] || byProvince[province.label] || { reportingRate: 0, reporting: 0, expected: 0, training: 0 };
+          return (
+            <g key={province.name} className="map-region">
+              <path d={province.path} fill={mapFill(item.reportingRate)} />
+              <text x={province.x} y={province.y}>
+                <tspan>{province.label || province.name}</tspan>
+                <tspan x={province.x} dy="18">{item.reportingRate.toFixed(1)}%</tspan>
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+      <div className="map-legend">
+        <span><i className="good" />95%+</span>
+        <span><i className="watch" />90-94%</span>
+        <span><i className="risk" />Below 90%</span>
+      </div>
+    </div>
+  );
+}
+
+function mapFill(rate) {
+  if (rate >= 95) return "#147a46";
+  if (rate >= 90) return "#a96e00";
+  return "#b42318";
 }
 
 function DataTable({ rows, columns, total }) {
