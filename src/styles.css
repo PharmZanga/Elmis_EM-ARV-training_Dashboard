@@ -558,29 +558,50 @@ h1 {
   padding: 14px 16px 16px;
 }
 
-.zambia-map {
+.google-zambia-map {
   width: 100%;
-  min-height: 318px;
+  min-height: 340px;
   display: block;
 }
 
-.map-region path {
-  stroke: #ffffff;
-  stroke-width: 7;
-  paint-order: stroke;
-  filter: drop-shadow(0 7px 10px rgba(20, 35, 30, 0.12));
-}
-
-.map-region text {
-  fill: #ffffff;
-  font-size: 17px;
-  font-weight: 900;
-  text-anchor: middle;
+.map-message {
+  margin-top: -220px;
+  min-height: 220px;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 800;
+  text-align: center;
   pointer-events: none;
 }
 
-.map-region text tspan:first-child {
-  font-size: 15px;
+.map-label-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+}
+
+.map-label-grid span {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 9px;
+  border: 1px solid #dbe7e2;
+  border-radius: 9px;
+  background: #f8fbfa;
+}
+
+.map-label-grid b {
+  color: var(--header);
+  font-size: 0.78rem;
+}
+
+.map-label-grid em {
+  color: var(--green);
+  font-size: 0.78rem;
+  font-style: normal;
+  font-weight: 900;
 }
 
 .map-legend {

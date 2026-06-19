@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { dashboardData } from "./dashboardData.js";
 import "./styles.css";
@@ -471,35 +471,53 @@ function ProvincePerformanceCards({ values }) {
 }
 
 function ProvincePerformanceMap({ values }) {
-  const byProvince = Object.fromEntries(values.map((item) => [item.province, item]));
-  const provinces = [
-    { name: "North Western", label: "North-Western", x: 190, y: 180, w: 168, h: 122, path: "M98 148 L230 116 L334 168 L312 270 L168 292 L84 232 Z" },
-    { name: "Copperbelt", x: 332, y: 122, w: 122, h: 82, path: "M330 118 L430 122 L468 182 L420 230 L326 208 L302 158 Z" },
-    { name: "Luapula", x: 486, y: 104, w: 112, h: 116, path: "M472 116 L548 82 L618 142 L592 240 L500 232 L458 166 Z" },
-    { name: "Northern", x: 560, y: 70, w: 144, h: 102, path: "M550 58 L696 70 L732 154 L652 216 L578 176 L532 108 Z" },
-    { name: "Muchinga", x: 596, y: 198, w: 116, h: 132, path: "M604 190 L704 170 L742 282 L684 386 L606 320 L566 246 Z" },
-    { name: "Western", x: 170, y: 338, w: 154, h: 156, path: "M90 290 L230 276 L326 350 L294 510 L150 520 L80 424 Z" },
-    { name: "Central", x: 382, y: 292, w: 148, h: 112, path: "M324 252 L468 226 L566 294 L532 410 L388 414 L308 336 Z" },
-    { name: "Lusaka", x: 500, y: 424, w: 90, h: 64, path: "M506 398 L586 392 L618 444 L568 500 L500 472 L474 430 Z" },
-    { name: "Eastern", x: 642, y: 390, w: 116, h: 130, path: "M618 338 L724 286 L778 398 L724 534 L620 512 L584 424 Z" },
-    { name: "Southern", x: 404, y: 474, w: 166, h: 96, path: "M292 444 L458 424 L584 508 L532 582 L366 568 L278 514 Z" },
-  ];
+  const mapRef = useRef(null);
+  const [mapStatus, setMapStatus] = useState("loading");
+
+  useEffect(() => {
+    let cancelled = false;
+    loadGoogleGeoChart()
+      .then(() => {
+        if (cancelled || !mapRef.current) return;
+        const google = window.google;
+        const data = google.visualization.arrayToDataTable([
+          ["Province", "Reporting Rate"],
+          ...values.map((item) => [googleProvinceName(item.province), Number(item.reportingRate.toFixed(1))]),
+        ]);
+        const chart = new google.visualization.GeoChart(mapRef.current);
+        chart.draw(data, {
+          region: "ZM",
+          resolution: "provinces",
+          displayMode: "regions",
+          backgroundColor: "transparent",
+          datalessRegionColor: "#e6ece9",
+          defaultColor: "#e6ece9",
+          colorAxis: {
+            minValue: 80,
+            maxValue: 100,
+            colors: ["#b42318", "#a96e00", "#147a46"],
+          },
+          legend: "none",
+          tooltip: {
+            textStyle: { color: "#14231e", fontSize: 13 },
+          },
+        });
+        setMapStatus("ready");
+      })
+      .catch(() => {
+        if (!cancelled) setMapStatus("error");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [values]);
+
   return (
     <div className="zambia-map-wrap">
-      <svg className="zambia-map" viewBox="40 40 780 560" role="img" aria-label="Zambia provincial reporting performance map">
-        {provinces.map((province) => {
-          const item = byProvince[province.name] || byProvince[province.label] || { reportingRate: 0, reporting: 0, expected: 0, training: 0 };
-          return (
-            <g key={province.name} className="map-region">
-              <path d={province.path} fill={mapFill(item.reportingRate)} />
-              <text x={province.x} y={province.y}>
-                <tspan>{province.label || province.name}</tspan>
-                <tspan x={province.x} dy="18">{item.reportingRate.toFixed(1)}%</tspan>
-              </text>
-            </g>
-          );
-        })}
-      </svg>
+      <div ref={mapRef} className="google-zambia-map" aria-label="Google map of Zambia provincial reporting performance" />
+      {mapStatus === "loading" && <div className="map-message">Loading Google map...</div>}
+      {mapStatus === "error" && <div className="map-message">Google map could not load. Check internet access and refresh the page.</div>}
+      <ProvinceMapLabels values={values} />
       <div className="map-legend">
         <span><i className="good" />95%+</span>
         <span><i className="watch" />90-94%</span>
@@ -509,10 +527,53 @@ function ProvincePerformanceMap({ values }) {
   );
 }
 
-function mapFill(rate) {
-  if (rate >= 95) return "#147a46";
-  if (rate >= 90) return "#a96e00";
-  return "#b42318";
+function ProvinceMapLabels({ values }) {
+  return (
+    <div className="map-label-grid">
+      {values.map((item) => (
+        <span key={item.province}>
+          <b>{item.province}</b>
+          <em>{item.reportingRate.toFixed(1)}%</em>
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function loadGoogleGeoChart() {
+  if (window.google?.visualization?.GeoChart) return Promise.resolve();
+  if (window.googleGeoChartPromise) return window.googleGeoChartPromise;
+  window.googleGeoChartPromise = new Promise((resolve, reject) => {
+    const existing = document.querySelector('script[src="https://www.gstatic.com/charts/loader.js"]');
+    const loadCharts = () => {
+      if (!window.google?.charts) {
+        reject(new Error("Google Charts loader unavailable"));
+        return;
+      }
+      window.google.charts.load("current", { packages: ["geochart"] });
+      window.google.charts.setOnLoadCallback(resolve);
+    };
+    if (existing) {
+      existing.addEventListener("load", loadCharts, { once: true });
+      existing.addEventListener("error", reject, { once: true });
+      loadCharts();
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = "https://www.gstatic.com/charts/loader.js";
+    script.async = true;
+    script.onload = loadCharts;
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
+  return window.googleGeoChartPromise;
+}
+
+function googleProvinceName(province) {
+  const names = {
+    "North Western": "North-Western",
+  };
+  return names[province] || province;
 }
 
 function DataTable({ rows, columns, total }) {
