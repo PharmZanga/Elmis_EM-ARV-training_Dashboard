@@ -10,6 +10,20 @@ const menuItems = [
   ["training", "3", "Training Linkages"],
   ["tasks", "4", "Task Follow-ups"],
   ["trainings", "5", "Trainings"],
+  ["helpdesk", "6", "Help Desk"],
+];
+
+const helpDeskContacts = [
+  { province: "Central", firstName: "Bertha", lastName: "Khondowe", phone: "0974323833" },
+  { province: "Copperbelt", firstName: "Nyasulu", lastName: "Aaron", phone: "0978402727" },
+  { province: "Eastern", firstName: "Wemba William", lastName: "Phiri", phone: "0977393174" },
+  { province: "Luapula", firstName: "Raphael", lastName: "Mandevu", phone: "0978587579" },
+  { province: "Lusaka", firstName: "Siphiwe", lastName: "Makowane", phone: "0979444769" },
+  { province: "Muchinga", firstName: "Simon", lastName: "Tembo", phone: "0967787563" },
+  { province: "North-Western", firstName: "Allan", lastName: "Silwamba", phone: "0971022280" },
+  { province: "Northern", firstName: "Lawrence", lastName: "Mvula", phone: "0977624216" },
+  { province: "Southern", firstName: "Luckson", lastName: "Tembo", phone: "0968630995" },
+  { province: "Western", firstName: "William", lastName: "Kapambwe", phone: "0973426211" },
 ];
 
 const trainingHighlights = [
@@ -117,23 +131,26 @@ function DashboardApp() {
         </aside>
 
         <section className="content">
-          <div className="page-filters" aria-label="Dashboard filters">
-            <FilterGroup title="Period" items={periods} selected={selectedPeriod} onSelect={setSelectedPeriod} />
-            <FilterGroup title="Program" items={["All", ...programs]} selected={selectedProgram} onSelect={setSelectedProgram} />
-            <FilterGroup title="Province" items={["All", ...provinces]} selected={selectedProvince} onSelect={setSelectedProvince} />
-            <FilterGroup title="District" items={["All", ...districts]} selected={selectedDistrict} onSelect={setSelectedDistrict} />
-          </div>
-          <div className="context-strip">
-            <span>{selectedPeriod}</span>
-            <span>{selectedProgram}</span>
-            <span>{selectedProvince === "All" ? "National" : selectedProvince}</span>
-            <span>{selectedDistrict === "All" ? "All Districts" : selectedDistrict}</span>
-          </div>
+          {activePage !== "helpdesk" && <>
+            <div className="page-filters" aria-label="Dashboard filters">
+              <FilterGroup title="Period" items={periods} selected={selectedPeriod} onSelect={setSelectedPeriod} />
+              <FilterGroup title="Program" items={["All", ...programs]} selected={selectedProgram} onSelect={setSelectedProgram} />
+              <FilterGroup title="Province" items={["All", ...provinces]} selected={selectedProvince} onSelect={setSelectedProvince} />
+              <FilterGroup title="District" items={["All", ...districts]} selected={selectedDistrict} onSelect={setSelectedDistrict} />
+            </div>
+            <div className="context-strip">
+              <span>{selectedPeriod}</span>
+              <span>{selectedProgram}</span>
+              <span>{selectedProvince === "All" ? "National" : selectedProvince}</span>
+              <span>{selectedDistrict === "All" ? "All Districts" : selectedDistrict}</span>
+            </div>
+          </>}
           {activePage === "executive" && <ExecutivePage totals={totals} statusRows={statusRows} participants={filteredParticipants} districtBars={districtBars} provinceTicker={provinceTicker} followUps={followUps} provinceCards={provinceCards} monthlyTrends={monthlyTrends} insights={insights} priorityRows={priorityRows} />}
           {activePage === "reports" && <KpiPage totals={totals} statusRows={statusRows} districtBars={districtBars} submissionTrend={submissionTrend} provinceTicker={provinceTicker} provinceCards={provinceCards} monthlyTrends={monthlyTrends} insights={insights} />}
           {activePage === "training" && <TrainingPage totals={totals} participants={filteredParticipants} facilityKpis={statusRows} />}
           {activePage === "tasks" && <TaskPage totals={totals} statusRows={statusRows} followUps={followUps} provinceTicker={provinceTicker} priorityRows={priorityRows} insights={insights} />}
           {activePage === "trainings" && <TrainingsPage totals={totals} participants={filteredParticipants} provinceCards={provinceCards} />}
+          {activePage === "helpdesk" && <HelpDeskPage />}
         </section>
       </section>
     </main>
@@ -298,6 +315,89 @@ function TaskPage({ totals, statusRows, followUps, provinceTicker, priorityRows,
         <Panel title="Province Reporting Watch"><BarChart values={provinceTicker.slice(0, 10).map((item) => ({ label: item.province, value: item.reportingRate }))} max={100} suffix="%" /></Panel>
       </section>
     </>
+  );
+}
+
+function HelpDeskPage() {
+  const supportSteps = [
+    ["1", "Report", "The facility shares the affected workflow, exact error, date and time, and a screenshot where possible."],
+    ["2", "Triage", "The district superuser checks common account, workflow, reporting, data-quality, and connectivity issues."],
+    ["3", "Coordinate", "The provincial focal person guides troubleshooting, provides remote support, and records the outcome."],
+    ["4", "Escalate", "Unresolved, security-related, or system-wide incidents are escalated to the national eLMIS help desk with the evidence and actions already tried."],
+  ];
+
+  return (
+    <section className="help-desk-page">
+      <header className="help-desk-hero panel">
+        <div>
+          <span className="help-desk-kicker">National support network</span>
+          <h2>eLMIS Provincial Help Desk</h2>
+          <p>Provincial help desk focal persons work with district superusers to provide fast, local first-tier support to facilities. They diagnose routine eLMIS problems, coach users, track each case, and escalate issues that require national technical support.</p>
+        </div>
+        <div className="help-desk-hero-stats" aria-label="Help desk coverage">
+          <strong>10</strong>
+          <span>provinces covered</span>
+          <small>Tier 1 local response</small>
+        </div>
+      </header>
+
+      <section className="help-desk-flow" aria-labelledby="support-flow-title">
+        <div className="section-heading">
+          <span>Support pathway</span>
+          <h2 id="support-flow-title">How a support request is handled</h2>
+        </div>
+        <div className="support-step-grid">
+          {supportSteps.map(([number, title, description]) => (
+            <article className="support-step" key={number}>
+              <b>{number}</b>
+              <div><h3>{title}</h3><p>{description}</p></div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="help-desk-directory" aria-labelledby="directory-title">
+        <div className="section-heading">
+          <span>Provincial contacts</span>
+          <h2 id="directory-title">Find your help desk focal person</h2>
+          <p>Start with your district superuser. The provincial contact coordinates follow-up and escalation when additional help is needed.</p>
+        </div>
+        <div className="contact-card-grid">
+          {helpDeskContacts.map((contact) => (
+            <article className="contact-card" key={contact.province}>
+              <div className="contact-card-top">
+                <span className="contact-avatar" aria-hidden="true">{contact.firstName[0]}{contact.lastName[0]}</span>
+                <span className="province-badge">{contact.province}</span>
+              </div>
+              <h3>{contact.firstName} {contact.lastName}</h3>
+              <p>Provincial Help Desk Focal Person</p>
+              <a href={`tel:+260${contact.phone.replace(/^0/, "")}`} aria-label={`Call ${contact.firstName} ${contact.lastName} on ${contact.phone}`}>
+                <span aria-hidden="true">☎</span> {contact.phone}
+              </a>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="help-desk-bottom-grid">
+        <article className="help-desk-note panel">
+          <h2>Before contacting support</h2>
+          <ul>
+            <li>State your province, district, facility, name, and callback number.</li>
+            <li>Describe the affected eLMIS module or task and the exact error message.</li>
+            <li>Include the date and time, a screenshot, and the steps already attempted.</li>
+            <li>Never share passwords, PINs, or one-time security codes.</li>
+          </ul>
+        </article>
+        <article className="help-desk-note panel escalation-note">
+          <h2>First tier, then escalation</h2>
+          <p>District superusers handle common operational problems close to the facility. Provincial personnel coordinate complex cases, reinforce skills through remote guidance or on-the-job support, and send unresolved cases to the national team with complete troubleshooting notes.</p>
+          <div className="support-statuses"><span>Acknowledge</span><i>→</i><span>Diagnose</span><i>→</i><span>Resolve or escalate</span><i>→</i><span>Confirm closure</span></div>
+        </article>
+      </section>
+
+      <p className="help-desk-source-note">Support approach informed by Zambia's eLMIS superuser model and established eLMIS help-desk practices.</p>
+    </section>
   );
 }
 
