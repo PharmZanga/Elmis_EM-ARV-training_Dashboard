@@ -11,6 +11,7 @@ const menuItems = [
   ["tasks", "4", "Task Follow-ups"],
   ["trainings", "5", "Trainings"],
   ["helpdesk", "6", "Help Desk"],
+  ["updates", "7", "Latest Updates"],
 ];
 
 const helpDeskContacts = [
@@ -60,6 +61,10 @@ function DashboardApp() {
   const [selectedProgram, setSelectedProgram] = useState("All");
   const [selectedProvince, setSelectedProvince] = useState("All");
   const [selectedDistrict, setSelectedDistrict] = useState("All");
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }, [activePage]);
 
   const districts = useMemo(() => {
     return unique(
@@ -131,7 +136,7 @@ function DashboardApp() {
         </aside>
 
         <section className="content">
-          {activePage !== "helpdesk" && <>
+          {!["helpdesk", "updates"].includes(activePage) && <>
             <div className="page-filters" aria-label="Dashboard filters">
               <FilterGroup title="Period" items={periods} selected={selectedPeriod} onSelect={setSelectedPeriod} />
               <FilterGroup title="Program" items={["All", ...programs]} selected={selectedProgram} onSelect={setSelectedProgram} />
@@ -151,6 +156,7 @@ function DashboardApp() {
           {activePage === "tasks" && <TaskPage totals={totals} statusRows={statusRows} followUps={followUps} provinceTicker={provinceTicker} priorityRows={priorityRows} insights={insights} />}
           {activePage === "trainings" && <TrainingsPage totals={totals} participants={filteredParticipants} provinceCards={provinceCards} />}
           {activePage === "helpdesk" && <HelpDeskPage />}
+          {activePage === "updates" && <LatestUpdatesPage />}
         </section>
       </section>
     </main>
@@ -397,6 +403,89 @@ function HelpDeskPage() {
       </section>
 
       <p className="help-desk-source-note">Support approach informed by Zambia's eLMIS superuser model and established eLMIS help-desk practices.</p>
+    </section>
+  );
+}
+
+function LatestUpdatesPage() {
+  const handoverPhotos = [
+    ["help-desk-handover-western.jpeg", "The Chief Pharmacist – Logistics presents help-desk equipment to a provincial eLMIS expert."],
+    ["help-desk-recipients.jpeg", "Provincial recipients with the laptop and Bluetooth headset support package."],
+    ["help-desk-handover-northern.jpeg", "Official handover of a laptop and Bluetooth headset for provincial eLMIS support."],
+    ["help-desk-handover-headset.jpeg", "Bluetooth headset and laptop supplied to strengthen real-time troubleshooting."],
+    ["help-desk-handover-laptop.jpeg", "Equipment handover supporting the provincial first-tier help-desk model."],
+  ];
+
+  return (
+    <section className="updates-page">
+      <header className="updates-hero panel">
+        <div>
+          <span className="updates-kicker">eLMIS Newsroom</span>
+          <h2>Latest Updates</h2>
+          <p>System releases, digital-health integration milestones, and provincial support initiatives strengthening Zambia's logistics information and help-desk network.</p>
+        </div>
+        <div className="updates-hero-meta">
+          <span>System update</span>
+          <span>Digital integration</span>
+          <span>Provincial support</span>
+        </div>
+      </header>
+
+      <article className="release-story panel">
+        <div className="release-version" aria-label="eLMIS Facility Edition version 4.4.5">
+          <span>Facility Edition</span>
+          <strong>v4.4.5</strong>
+          <small>Now live</small>
+        </div>
+        <div className="release-copy">
+          <span className="story-label">Release notice</span>
+          <h2>eLMIS Facility Edition v4.4.5 is now live</h2>
+          <p>Kindly note that eLMIS Facility Edition (FE) v4.4.5 has been released. One of the key issues resolved is the R&amp;R validation error that caused some products to be incorrectly highlighted in red during report submission.</p>
+          <div className="release-callout"><b>What changed</b><span>The corrected validation behaviour should help users review and submit R&amp;R reports with clearer product-level feedback.</span></div>
+        </div>
+      </article>
+
+      <section className="updates-story-grid">
+        <article className="integration-story panel">
+          <div className="integration-mark" aria-hidden="true"><span>eLMIS</span><i>↔</i><span>SmartCare</span></div>
+          <div className="story-body">
+            <span className="story-label">Digital health integration</span>
+            <h2>Connecting eLMIS and SmartCare</h2>
+            <p>The integration of eLMIS and SmartCare supports a more connected digital-health environment by improving the flow of service and logistics information between systems. The goal is to reduce duplicate data entry, strengthen data consistency, and make timely commodity information more useful for reporting, planning, and supply-chain decisions.</p>
+            <p>As functionality is introduced, facilities should follow approved implementation notices, user guidance, and support channels. District superusers and provincial help-desk focal persons will assist users and escalate technical issues that require national support.</p>
+          </div>
+        </article>
+
+        <article className="support-impact panel">
+          <div className="story-body">
+            <span className="story-label">Provincial help desks</span>
+            <h2>Equipment strengthens first-tier support</h2>
+            <p><b>The Chief Pharmacist – Logistics, Mr. Luke Alutuli,</b> has officially handed over laptops and Bluetooth headsets to Northern Province and Western Province eLMIS experts as part of the Ministry's continued work to strengthen provincial eLMIS Help Desks.</p>
+            <p>The equipment will improve communication during troubleshooting and remote guidance, helping provincial teams provide faster, better-coordinated technical assistance to health facilities.</p>
+            <div className="impact-points">
+              <span><b>Faster response</b> for facility support requests</span>
+              <span><b>Remote guidance</b> for district teams and users</span>
+              <span><b>Better coordination</b> across the national supply chain</span>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section className="updates-gallery" aria-labelledby="handover-gallery-title">
+        <div className="section-heading">
+          <span>In pictures</span>
+          <h2 id="handover-gallery-title">Provincial help-desk equipment handover</h2>
+          <p>The initiative supports the Ministry's target for every province to establish a first-tier help desk for timely troubleshooting, improved reporting, and stronger digital logistics management.</p>
+        </div>
+        <div className="handover-photo-grid">
+          {handoverPhotos.map(([file, caption], index) => (
+            <figure className={`handover-photo ${index === 0 ? "featured" : ""}`} key={file}>
+              <img src={`./latest-updates/${file}`} alt={caption} loading={index > 1 ? "lazy" : "eager"} />
+              <figcaption>{caption}</figcaption>
+            </figure>
+          ))}
+        </div>
+      </section>
     </section>
   );
 }
