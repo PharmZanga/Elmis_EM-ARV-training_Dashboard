@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client";
 import { dashboardData } from "./dashboardData.js";
 import "./styles.css";
 
-const { participants, reportingRows, timelinessRows } = dashboardData;
+const { participants, reportingRows, timelinessRows, facilityMetadata = [] } = dashboardData;
 const menuItems = [
   ["executive", "1", "Executive"],
   ["reports", "2", "eLMIS Reports"],
@@ -67,12 +67,20 @@ function DashboardApp() {
   }, [activePage]);
 
   const districts = useMemo(() => {
+    const districtSource = facilityMetadata.length ? facilityMetadata : reportingRows;
     return unique(
-      reportingRows
+      districtSource
         .filter((row) => selectedProvince === "All" || row.province === selectedProvince)
         .map((row) => row.district)
+        .filter(Boolean)
     ).sort();
   }, [selectedProvince]);
+
+  useEffect(() => {
+    if (selectedDistrict !== "All" && !districts.includes(selectedDistrict)) {
+      setSelectedDistrict("All");
+    }
+  }, [districts, selectedDistrict]);
 
   const filteredReporting = useMemo(() => {
     return reportingRows.filter((row) => matchesFilters(row, selectedPeriod, selectedProgram, selectedProvince, selectedDistrict));
@@ -91,7 +99,11 @@ function DashboardApp() {
     });
   }, [selectedProvince, selectedDistrict]);
 
-  const totals = useMemo(() => getTotals(filteredReporting, filteredTimeliness, filteredParticipants), [filteredReporting, filteredTimeliness, filteredParticipants]);
+  const facilitySemantics = useMemo(() => getFacilityReportingSemantics(filteredReporting), [filteredReporting]);
+  const totals = useMemo(() => ({
+    ...getTotals(filteredReporting, filteredTimeliness, filteredParticipants),
+    ...facilitySemantics,
+  }), [filteredReporting, filteredTimeliness, filteredParticipants, facilitySemantics]);
   const statusRows = useMemo(() => facilityRows(filteredReporting, filteredTimeliness), [filteredReporting, filteredTimeliness]);
   const districtBars = useMemo(() => districtPerformance(filteredReporting), [filteredReporting]);
   const submissionTrend = useMemo(() => reportSubmissionTrend(filteredReporting), [filteredReporting]);
@@ -136,11 +148,20 @@ function DashboardApp() {
         </aside>
 
         <section className="content">
+          <PageTicker activePage={activePage} totals={totals} participants={filteredParticipants} followUps={followUps} period={selectedPeriod} province={selectedProvince} />
           {!["helpdesk", "updates"].includes(activePage) && <>
             <div className="page-filters" aria-label="Dashboard filters">
               <FilterGroup title="Period" items={periods} selected={selectedPeriod} onSelect={setSelectedPeriod} />
               <FilterGroup title="Program" items={["All", ...programs]} selected={selectedProgram} onSelect={setSelectedProgram} />
-              <FilterGroup title="Province" items={["All", ...provinces]} selected={selectedProvince} onSelect={setSelectedProvince} />
+              <FilterGroup
+                title="Province"
+                items={["All", ...provinces]}
+                selected={selectedProvince}
+                onSelect={(province) => {
+                  setSelectedProvince(province);
+                  setSelectedDistrict("All");
+                }}
+              />
               <FilterGroup title="District" items={["All", ...districts]} selected={selectedDistrict} onSelect={setSelectedDistrict} />
             </div>
             <div className="context-strip">
@@ -163,50 +184,170 @@ function DashboardApp() {
   );
 }
 
+function reportWasSubmitted(row) {
+  const status = String(row.status || "").trim().toUpperCase().replace(/[-\s]+/g, "_");
+  const received = String(row.dateReceived || "").trim();
+  const emptyReceived = new Set(["", "-", "--", "N/A", "NA", "NIL", "NONE", "NULL"]);
+
+  // Explicit non-reporting status must always win, even when the source sheet
+  // contains a placeholder or legacy value in Date Report Received.
+  if (
+    status.includes("NON_REPORT") ||
+    status.includes("NOT_REPORT") ||
+    status.includes("DID_NOT_REPORT") ||
+    status === "NO" ||
+    status === "MISSING"
+  ) return false;
+
+  if (!emptyReceived.has(received.toUpperCase())) return true;
+  if (!status) return false;
+
+  return (
+    status === "REPORTING" ||
+    status === "REPORTED" ||
+    status.includes("SUBMIT") ||
+    status.includes("RECEIV")
+  );
+}
+
+function getFacilityReportingSemantics(rows) {
+  const facilities = new Map();
+
+  rows.forEach((row) => {
+    const facilityKey = row.facilityCode || `${row.province || ""}|${row.district || ""}|${row.facility || ""}`;
+    if (!facilityKey) return;
+
+    const programKey = String(row.program || "Unspecified").trim() || "Unspecified";
+    const facility = facilities.get(facilityKey) || new Map();
+    const program = facility.get(programKey) || { submitted: false };
+
+    // A programme is counted as submitted if any row for that facility-programme
+    // has a received date or a submitted/reported status.
+    if (reportWasSubmitted(row)) program.submitted = true;
+
+    facility.set(programKey, program);
+    facilities.set(facilityKey, facility);
+  });
+
+  const facilitiesExpected = facilities.size;
+  let facilitiesReported = 0;
+
+  facilities.forEach((programs) => {
+    const expectedPrograms = programs.size;
+    const submittedPrograms = [...programs.values()].filter((item) => item.submitted).length;
+    if (expectedPrograms > 0 && submittedPrograms === expectedPrograms) facilitiesReported += 1;
+  });
+
+  return {
+    facilitiesExpected,
+    facilitiesReported,
+    nonReportingFacilities: Math.max(facilitiesExpected - facilitiesReported, 0),
+  };
+}
+
+function uniqueFacilityStatusRows(rows) {
+  const facilities = new Map();
+
+  rows.forEach((row) => {
+    const facilityKey = row.facilityCode || `${row.province || ""}|${row.district || ""}|${row.facility || ""}`;
+    if (!facilityKey) return;
+
+    const programKey = String(row.program || "Unspecified").trim() || "Unspecified";
+    const facility = facilities.get(facilityKey) || {
+      representative: { ...row },
+      programs: new Map(),
+    };
+    const program = facility.programs.get(programKey) || { submitted: false };
+    if (reportWasSubmitted(row)) program.submitted = true;
+    facility.programs.set(programKey, program);
+    facilities.set(facilityKey, facility);
+  });
+
+  return [...facilities.values()].map(({ representative, programs }) => {
+    const expectedPrograms = programs.size;
+    const submittedPrograms = [...programs.values()].filter((item) => item.submitted).length;
+    const complete = expectedPrograms > 0 && submittedPrograms === expectedPrograms;
+
+    return {
+      ...representative,
+      status: complete ? "REPORTING" : "NON_REPORTING",
+      expectedPrograms,
+      submittedPrograms,
+    };
+  });
+}
+
 function ExecutivePage({ totals, statusRows, participants, districtBars, provinceTicker, followUps, provinceCards, monthlyTrends, insights, priorityRows }) {
+  const [executiveTab, setExecutiveTab] = useState("overview");
   const professionCounts = countBy(participants, "profession");
   const trainingByRole = [
     { label: "Experts", value: totals.experts },
     { label: "Superusers", value: totals.superusers },
     { label: "Users", value: totals.users },
   ];
+
   return (
     <>
       <KpiGrid items={[
-        ["Reporting Rate", `${totals.reportingRate.toFixed(1)}%`],
-        ["Timeliness", `${totals.timeliness.toFixed(1)}%`],
-        ["Participants", participants.length],
-        ["Non-Reporting", totals.nonReporting],
-        ["Late Follow-ups", followUps.lateDistricts.length],
+        { label: "Reporting Rate", value: `${totals.reportingRate.toFixed(1)}%`, title: "Reporting Rate Details", rows: statusRows, columns: ["province", "district", "facility", "program", "status", "reportingRate"] },
+        { label: "Timeliness", value: `${totals.timeliness.toFixed(1)}%`, title: "Reporting Timeliness Details", rows: statusRows, columns: ["province", "district", "facility", "program", "timeliness", "status"] },
+        { label: "Trained eLMIS Personnel", value: participants.length, title: "Trained eLMIS Personnel", rows: participants, columns: ["province", "district", "facility", "firstName", "lastName", "profession", "role"] },
+        { label: "Non-Reporting Facilities", value: totals.nonReportingFacilities, title: "Non-Reporting Facilities", rows: statusRows.filter((row) => row.status === "NON_REPORTING"), columns: ["province", "district", "facility", "program", "status"] },
+        { label: "Late Follow-ups", value: followUps.lateDistricts.length, title: "Late Reporting Follow-ups", rows: followUps.lateDistricts, columns: ["province", "district", "program", "reportedLate", "timeliness", "task"] },
       ]} />
       <InsightStrip insights={insights} />
-      <ProvinceTicker values={provinceTicker} />
-      <section className="grid executive-grid">
-        <Panel title="Executive Summary" className="summary-landscape">
-          <div className="summary-copy">
-            <p>The eLMIS Essential Medicines (EM), Antiretroviral (ARV) Reporting and Training Dashboard provides a comprehensive overview of reporting performance, user engagement, and capacity-building efforts across Zambia's health supply chain.</p>
-            <p>The dashboard serves as a strategic tool for monitoring data submission rates, identifying reporting gaps, tracking system utilization, and assessing training coverage among health workers.</p>
-            <p>By consolidating reporting and training indicators into a single platform, the dashboard enables national, provincial, district, and facility-level managers to monitor compliance with reporting requirements, evaluate data quality, and identify areas requiring targeted support.</p>
-            <p>The dashboard further facilitates evidence-based decision-making by highlighting trends in reporting performance and user participation in eLMIS training programs.</p>
-            <p>The platform supports ongoing efforts to strengthen the national supply chain by improving data visibility, promoting accountability, enhancing user competency, and ensuring timely availability of reliable logistics information for forecasting, quantification, procurement, and commodity management.</p>
-            <p>Ultimately, the dashboard contributes to improved supply chain performance and the uninterrupted availability of essential medicines and antiretroviral commodities across the country.</p>
-          </div>
-        </Panel>
-        <Panel title="Zambia Provincial Performance" className="map-panel"><ProvincePerformanceMap values={provinceCards} /></Panel>
-        <Panel title="Monthly EM and ARV Reporting Trends"><MonthlyTrendChart values={monthlyTrends} /></Panel>
-        <Panel title="Priority Actions"><DataTable rows={priorityRows} columns={["issue", "provinceDistrict", "actionRequired", "responsible", "dueDate", "status"]} /></Panel>
-        <Panel title="Top Reporting Districts"><BarChart values={districtBars.slice(0, 8)} max={100} suffix="%" /></Panel>
-        <Panel title="Training Role Mix"><BarChart values={trainingByRole} max={Math.max(...trainingByRole.map((item) => item.value), 1)} /></Panel>
-        <Panel title="Profession Mix"><Donut counts={professionCounts} /></Panel>
-        <Panel title="Reporting Status Snapshot"><Pie reporting={totals.reporting} nonReporting={totals.nonReporting} /></Panel>
-      </section>
+
+      <div className="executive-tabs" role="tablist" aria-label="Executive dashboard views">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={executiveTab === "overview"}
+          className={executiveTab === "overview" ? "active" : ""}
+          onClick={() => setExecutiveTab("overview")}
+        >
+          Overview
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={executiveTab === "trends"}
+          className={executiveTab === "trends" ? "active" : ""}
+          onClick={() => setExecutiveTab("trends")}
+        >
+          Reporting Trends
+        </button>
+      </div>
+
+      {executiveTab === "overview" && (
+        <section className="grid executive-grid executive-tab-panel">
+          <Panel title="Executive Summary" className="summary-landscape compact-summary">
+            <div className="summary-copy">
+              <p>The eLMIS EM and ARV Training Dashboard provides a national view of reporting performance, timeliness, reporting gaps and workforce capacity across Zambia's health supply chain. It helps managers identify facilities and districts requiring follow-up and supports evidence-based action.</p>
+              <p>By bringing reporting and training indicators into one platform, the dashboard strengthens accountability, data visibility and targeted support for reliable logistics information and continuous availability of essential medicines and antiretroviral commodities.</p>
+            </div>
+          </Panel>
+          <Panel title="Zambia Provincial Performance" className="map-panel" detailRows={provinceCards} detailColumns={["province", "reportingRate", "reporting", "expected", "training"]}><ProvincePerformanceMap values={provinceCards} /></Panel>
+          <Panel title="Priority Actions" className="priority-panel"><PriorityActionList rows={priorityRows} /></Panel>
+          <Panel title="Top Reporting Districts"><BarChart values={districtBars.slice(0, 8)} max={100} suffix="%" /></Panel>
+          <Panel title="Training Role Mix"><BarChart values={trainingByRole} max={Math.max(...trainingByRole.map((item) => item.value), 1)} /></Panel>
+        </section>
+      )}
+
+      {executiveTab === "trends" && (
+        <section className="grid executive-grid executive-tab-panel executive-trends-grid">
+          <Panel title="Monthly EM and ARV Reporting Trends" className="executive-wide-panel"><MonthlyTrendChart values={monthlyTrends} /></Panel>
+          <Panel title="Facility Reporting Status"><Pie reporting={totals.facilitiesReported} nonReporting={totals.nonReportingFacilities} /></Panel>
+          <Panel title="Profession Mix"><Donut counts={professionCounts} /></Panel>
+        </section>
+      )}
     </>
   );
 }
 
 function KpiPage({ totals, statusRows, districtBars, submissionTrend, provinceTicker, provinceCards, monthlyTrends, insights }) {
-  const reportedRows = statusRows.filter((row) => row.status === "REPORTING");
-  const nonReportingRows = statusRows.filter((row) => row.status === "NON_REPORTING");
+  const facilityStatusRows = uniqueFacilityStatusRows(statusRows);
+  const reportedRows = facilityStatusRows.filter((row) => row.status === "REPORTING");
+  const nonReportingRows = facilityStatusRows.filter((row) => row.status === "NON_REPORTING");
   const districtRows = districtBars.map((row) => ({
     district: row.label,
     reportingRate: row.value,
@@ -221,15 +362,15 @@ function KpiPage({ totals, statusRows, districtBars, submissionTrend, provinceTi
     },
     {
       label: "Facilities Reported",
-      value: totals.reporting,
-      title: "Facilities Reported Full Details",
+      value: totals.facilitiesReported,
+      title: "Unique Facilities Reported Full Details",
       rows: reportedRows,
       columns: ["province", "district", "facility", "program", "status", "dateReceived"],
     },
     {
-      label: "Non Reporting",
-      value: totals.nonReporting,
-      title: "Non Reporting Facility Details",
+      label: "Non-Reporting Facilities",
+      value: totals.nonReportingFacilities,
+      title: "Unique Non-Reporting Facility Details",
       rows: nonReportingRows,
       columns: ["province", "district", "facility", "program", "status"],
     },
@@ -253,141 +394,324 @@ function KpiPage({ totals, statusRows, districtBars, submissionTrend, provinceTi
     <>
       <KpiGrid items={reportCards} />
       <InsightStrip insights={insights} />
-      <ProvinceTicker values={provinceTicker} />
       <section className="grid three">
-        <Panel title="Reporting Rate by Facility"><DataTable rows={statusRows} columns={["district", "facility", "program", "reportingRate"]} total={`${totals.reportingRate.toFixed(1)}%`} /></Panel>
-        <Panel title="Reporting Timeliness"><DataTable rows={statusRows} columns={["district", "program", "timeliness", "status"]} total={`${totals.timeliness.toFixed(1)}%`} /></Panel>
-        <Panel title="Reporting Status"><DataTable rows={statusRows} columns={["province", "district", "facility", "status"]} /></Panel>
-        <Panel title="Reporting vs Non-Reporting"><Pie reporting={totals.reporting} nonReporting={totals.nonReporting} /></Panel>
-        <Panel title="Report Submission Distribution"><LineChart values={submissionTrend} /></Panel>
-        <Panel title="Reporting Rate by District"><BarChart values={districtBars.slice(0, 10)} max={100} suffix="%" /></Panel>
+        <Panel title="Reporting Rate by Facility" detailRows={statusRows} detailColumns={["province", "district", "facility", "program", "reportingRate", "status"]}><DataTable rows={statusRows} columns={["district", "facility", "program", "reportingRate"]} total={`${totals.reportingRate.toFixed(1)}%`} /></Panel>
+        <Panel title="Reporting Timeliness" detailRows={statusRows} detailColumns={["province", "district", "facility", "program", "timeliness", "status"]}><DataTable rows={statusRows} columns={["district", "program", "timeliness", "status"]} total={`${totals.timeliness.toFixed(1)}%`} /></Panel>
+        <Panel title="Reporting Status" detailRows={statusRows} detailColumns={["province", "district", "facility", "status"]}><DataTable rows={statusRows} columns={["province", "district", "facility", "status"]} /></Panel>
+        <Panel title="Facility Reporting vs Non-Reporting" detailRows={statusRows} detailColumns={["province", "district", "facility", "status"]}><Pie reporting={totals.facilitiesReported} nonReporting={totals.nonReportingFacilities} /></Panel>
+        <Panel title="Report Submission Distribution" detailRows={submissionTrend} detailColumns={["label", "value"]}><LineChart values={submissionTrend} /></Panel>
+        <Panel title="Reporting Rate by District" detailRows={districtRows} detailColumns={["district", "reportingRate"]}><BarChart values={districtBars.slice(0, 10)} max={100} suffix="%" /></Panel>
       </section>
       <section className="map-trend-row">
-        <Panel title="Zambia Provincial Performance" className="map-panel"><ProvincePerformanceMap values={provinceCards} /></Panel>
-        <Panel title="Monthly EM and ARV Reporting Trends"><MonthlyTrendChart values={monthlyTrends} /></Panel>
+        <Panel title="Zambia Provincial Performance" className="map-panel" detailRows={provinceCards} detailColumns={["province", "reportingRate", "reporting", "expected", "training"]}><ProvincePerformanceMap values={provinceCards} /></Panel>
+        <Panel title="Monthly EM and ARV Reporting Trends" detailRows={monthlyTrends} detailColumns={["label", "Essential Medicine", "Antiretroviral Drugs"]}><MonthlyTrendChart values={monthlyTrends} /></Panel>
       </section>
     </>
   );
 }
 
 function TaskPage({ totals, statusRows, followUps, provinceTicker, priorityRows, insights }) {
-  const taskCards = [
-    {
-      label: "Open Follow-ups",
-      value: followUps.nonReporting.length + followUps.lateDistricts.length,
-      title: "All Open Follow-ups",
-      rows: [...followUps.nonReporting, ...followUps.lateDistricts],
-      columns: ["province", "district", "facility", "program", "reportedLate", "task"],
-    },
-    {
-      label: "Facilities Not Reported",
-      value: followUps.nonReporting.length,
-      title: "Facilities That Have Not Reported This Month",
-      rows: followUps.nonReporting,
-      columns: ["province", "district", "facility", "program", "task"],
-    },
-    {
-      label: "Late Districts",
-      value: followUps.lateDistricts.length,
-      title: "Late Reporting District Details",
-      rows: followUps.lateDistricts,
-      columns: ["province", "district", "program", "expected", "reportedLate", "task"],
-    },
-    {
-      label: "Late Reports",
-      value: followUps.lateReports,
-      title: "Late Report Follow-up Details",
-      rows: followUps.lateDistricts,
-      columns: ["province", "district", "program", "expected", "reportedLate", "task"],
-    },
-    {
-      label: "Reporting Rate",
-      value: `${totals.reportingRate.toFixed(1)}%`,
-      title: "Reporting Rate Follow-up Context",
-      rows: statusRows,
-      columns: ["province", "district", "facility", "program", "status", "reportingRate"],
-    },
-  ];
-
   return (
     <>
-      <KpiGrid items={taskCards} />
+      <KpiGrid items={[
+        ["Open Follow-ups", followUps.nonReporting.length + followUps.lateDistricts.length],
+        ["Non-Reporting Facilities", followUps.nonReporting.length],
+        ["Late Districts", followUps.lateDistricts.length],
+        ["Late Reports", followUps.lateReports],
+        ["Reporting Rate", `${totals.reportingRate.toFixed(1)}%`],
+      ]} />
       <InsightStrip insights={insights} />
       <ProvinceTicker values={provinceTicker} />
-      <section className="grid task-grid">
-        <Panel title="Priority Actions"><DataTable rows={priorityRows} columns={["issue", "provinceDistrict", "actionRequired", "responsible", "dueDate", "status"]} /></Panel>
-        <Panel title="Facilities That Have Not Reported This Month"><DataTable rows={followUps.nonReporting} columns={["province", "district", "facility", "program", "task"]} /></Panel>
-        <Panel title="Late Reporting Follow-ups"><DataTable rows={followUps.lateDistricts} columns={["province", "district", "program", "expected", "reportedLate", "task"]} /></Panel>
-        <Panel title="Province Reporting Watch"><BarChart values={provinceTicker.slice(0, 10).map((item) => ({ label: item.province, value: item.reportingRate }))} max={100} suffix="%" /></Panel>
+
+      <section className="task-action-layout">
+        <ActionTrackerPanel
+          title="Priority Actions"
+          rows={priorityRows}
+          columns={["issue", "provinceDistrict", "actionRequired", "responsible", "dueDate"]}
+          getId={(row, index) => `priority-${row.issue || index}-${row.provinceDistrict || ""}`}
+        />
+        <div className="task-action-stack">
+          <ActionTrackerPanel
+            title="Facilities That Have Not Reported This Month"
+            rows={followUps.nonReporting}
+            columns={["province", "district", "facility", "program", "task"]}
+            getId={(row, index) => `nonreport-${row.facilityCode || row.facility || index}-${row.program || ""}`}
+          />
+          <ActionTrackerPanel
+            title="Late Reporting Follow-ups"
+            rows={followUps.lateDistricts}
+            columns={["province", "district", "program", "expected", "reportedLate", "task"]}
+            getId={(row, index) => `late-${row.province || ""}-${row.district || index}-${row.program || ""}`}
+          />
+        </div>
       </section>
     </>
   );
 }
 
+function ActionTrackerPanel({ title, rows, columns, getId }) {
+  const [expanded, setExpanded] = useState(false);
+  const [updates, setUpdates] = useState(() => loadTaskUpdates());
+
+  const saveUpdate = (id, next) => {
+    const merged = { ...updates, [id]: { ...(updates[id] || {}), ...next } };
+    setUpdates(merged);
+    localStorage.setItem("elmis-task-updates", JSON.stringify(merged));
+  };
+
+  const content = (
+    <div className="action-tracker-table-wrap">
+      <table className="action-tracker-table">
+        <thead>
+          <tr>
+            {columns.map((column) => <th key={column}>{labelize(column)}</th>)}
+            <th>Action Status</th>
+            <th>Comment Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, index) => {
+            const id = getId(row, index);
+            const update = updates[id] || {};
+            const comments = update.comments || [];
+            return (
+              <tr key={id}>
+                {columns.map((column) => <td key={column}>{formatCell(row[column], column)}</td>)}
+                <td className="action-status-cell">
+                  <select
+                    value={update.status || row.status || "Open"}
+                    onChange={(event) => saveUpdate(id, { status: event.target.value })}
+                    aria-label={`Action status for ${row.facility || row.district || row.issue || "task"}`}
+                  >
+                    <option>Open</option>
+                    <option>In progress</option>
+                    <option>Completed</option>
+                  </select>
+                </td>
+                <td className="comment-status-cell">
+                  <CommentButton
+                    count={comments.length}
+                    onSave={(comment) => saveUpdate(id, { comments: [...comments, comment] })}
+                  />
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+      {!rows.length && <div className="empty-action-state">No follow-up actions for the selected filters.</div>}
+    </div>
+  );
+
+  if (expanded) {
+    return (
+      <div className="action-expanded-page">
+        <div className="action-expanded-header">
+          <div>
+            <span className="eyebrow">Control Tower Action Tracker</span>
+            <h2>{title}</h2>
+            <p>{rows.length.toLocaleString()} actionable record{rows.length === 1 ? "" : "s"}</p>
+          </div>
+          <div className="action-expanded-actions">
+            <button type="button" onClick={() => setExpanded(false)}>← Back</button>
+            <button type="button" onClick={() => downloadCsv(title, rows)}>Export CSV</button>
+            <button type="button" onClick={() => window.print()}>Export PDF</button>
+          </div>
+        </div>
+        <div className="action-expanded-body">{content}</div>
+      </div>
+    );
+  }
+
+  return (
+    <article className="panel action-tracker-panel">
+      <div className="panel-title-row">
+        <h2>{title}</h2>
+        <button type="button" className="expand-panel-btn" onClick={() => setExpanded(true)}>Expand ↗</button>
+      </div>
+      {content}
+    </article>
+  );
+}
+
+function CommentButton({ count, onSave }) {
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [comment, setComment] = useState("");
+  const [error, setError] = useState("");
+
+  const submit = () => {
+    if (!name.trim() || !phone.trim() || !comment.trim()) {
+      setError("Name, phone number and comment are required.");
+      return;
+    }
+    onSave({
+      name: name.trim(),
+      phone: phone.trim(),
+      comment: comment.trim(),
+      createdAt: new Date().toISOString(),
+    });
+    setName("");
+    setPhone("");
+    setComment("");
+    setError("");
+    setOpen(false);
+  };
+
+  return (
+    <div className="comment-control">
+      <button type="button" className="comment-count-btn" onClick={() => setOpen(true)}>
+        {count} comment{count === 1 ? "" : "s"}
+      </button>
+      {open && (
+        <div className="comment-modal-backdrop" onClick={() => setOpen(false)}>
+          <div className="comment-modal" onClick={(event) => event.stopPropagation()}>
+            <div className="comment-modal-header">
+              <div>
+                <span className="eyebrow">Follow-up Comment</span>
+                <h3>Add action note</h3>
+              </div>
+              <button type="button" className="comment-close" onClick={() => setOpen(false)}>×</button>
+            </div>
+            <label>
+              Name <b>*</b>
+              <input value={name} onChange={(event) => setName(event.target.value)} placeholder="Full name" />
+            </label>
+            <label>
+              Phone number <b>*</b>
+              <input value={phone} onChange={(event) => setPhone(event.target.value)} placeholder="e.g. 0971234567" inputMode="tel" />
+            </label>
+            <label>
+              Comment <b>*</b>
+              <textarea value={comment} onChange={(event) => setComment(event.target.value)} placeholder="Enter follow-up note, outcome or next action" rows="4" />
+            </label>
+            {error && <p className="comment-error">{error}</p>}
+            <div className="comment-modal-actions">
+              <button type="button" className="secondary" onClick={() => setOpen(false)}>Cancel</button>
+              <button type="button" onClick={submit}>Save comment</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function loadTaskUpdates() {
+  try {
+    return JSON.parse(localStorage.getItem("elmis-task-updates") || "{}");
+  } catch {
+    return {};
+  }
+}
+
+
 function HelpDeskPage() {
   const supportSteps = [
-    ["1", "Report", "The facility shares the affected workflow, exact error, date and time, and a screenshot where possible."],
-    ["2", "Triage", "The district superuser checks common account, workflow, reporting, data-quality, and connectivity issues."],
-    ["3", "Coordinate", "The provincial focal person guides troubleshooting, provides remote support, and records the outcome."],
-    ["4", "Escalate", "Unresolved, security-related, or system-wide incidents are escalated to the national eLMIS help desk with the evidence and actions already tried."],
+    {
+      number: "1",
+      title: "Report",
+      text: "The facility shares the affected workflow, exact error, date and time, and a screenshot where possible."
+    },
+    {
+      number: "2",
+      title: "Triage",
+      text: "The district superuser checks common account, workflow, reporting, data-quality, and connectivity issues."
+    },
+    {
+      number: "3",
+      title: "Coordinate",
+      text: "The provincial focal person guides troubleshooting, provides remote support, and records the outcome."
+    },
+    {
+      number: "4",
+      title: "Escalate",
+      text: "Unresolved, security-related, or system-wide incidents are escalated to the national eLMIS help desk with the evidence and actions already tried."
+    }
   ];
 
   return (
-    <section className="help-desk-page">
-      <header className="help-desk-hero panel">
-        <div>
-          <span className="help-desk-kicker">National support network</span>
+    <section className="hd-page">
+
+      <section className="hd-hero">
+        <div className="hd-hero-copy">
+          <span className="hd-eyebrow">National Support Network</span>
           <h2>eLMIS Provincial Help Desk</h2>
-          <p>Provincial help desk focal persons work with district superusers to provide fast, local first-tier support to facilities. They diagnose routine eLMIS problems, coach users, track each case, and escalate issues that require national technical support.</p>
+          <p>
+            Provincial help desk focal persons work with district superusers to provide
+            fast, local first-tier support to facilities. They diagnose routine eLMIS
+            problems, coach users, track each case, and escalate issues that require
+            national technical support.
+          </p>
         </div>
-        <div className="help-desk-hero-stats" aria-label="Help desk coverage">
+
+        <div className="hd-hero-stat">
           <strong>10</strong>
-          <span>provinces covered</span>
-          <small>Tier 1 local response</small>
-        </div>
-      </header>
-
-      <section className="help-desk-flow" aria-labelledby="support-flow-title">
-        <div className="section-heading">
-          <span>Support pathway</span>
-          <h2 id="support-flow-title">How a support request is handled</h2>
-        </div>
-        <div className="support-step-grid">
-          {supportSteps.map(([number, title, description]) => (
-            <article className="support-step" key={number}>
-              <b>{number}</b>
-              <div><h3>{title}</h3><p>{description}</p></div>
-            </article>
-          ))}
+          <b>provinces covered</b>
+          <span>Tier 1 local response</span>
         </div>
       </section>
 
-      <section className="help-desk-directory" aria-labelledby="directory-title">
-        <div className="section-heading">
-          <span>Provincial contacts</span>
-          <h2 id="directory-title">Find your help desk focal person</h2>
-          <p>Start with your district superuser. The provincial contact coordinates follow-up and escalation when additional help is needed.</p>
+      <section className="hd-section">
+        <div className="hd-section-heading">
+          <span>Support Pathway</span>
+          <h2>How a support request is handled</h2>
         </div>
-        <div className="contact-card-grid">
-          {helpDeskContacts.map((contact) => (
-            <article className="contact-card" key={contact.province}>
-              <div className="contact-card-top">
-                <span className="contact-avatar" aria-hidden="true">{contact.firstName[0]}{contact.lastName[0]}</span>
-                <span className="province-badge">{contact.province}</span>
+
+        <div className="hd-step-grid">
+          {supportSteps.map((step) => (
+            <article className="hd-step-card" key={step.number}>
+              <div className="hd-step-number">{step.number}</div>
+              <div>
+                <h3>{step.title}</h3>
+                <p>{step.text}</p>
               </div>
-              <h3>{contact.firstName} {contact.lastName}</h3>
-              <p>Provincial Help Desk Focal Person</p>
-              <a href={`tel:+260${contact.phone.replace(/^0/, "")}`} aria-label={`Call ${contact.firstName} ${contact.lastName} on ${contact.phone}`}>
-                <span aria-hidden="true">☎</span> {contact.phone}
-              </a>
             </article>
           ))}
         </div>
       </section>
 
-      <section className="help-desk-bottom-grid">
-        <article className="help-desk-note panel">
-          <h2>Before contacting support</h2>
+      <section className="hd-section hd-directory">
+        <div className="hd-section-heading">
+          <span>Provincial Contacts</span>
+          <h2>Find your help desk focal person</h2>
+          <p>
+            Start with your district superuser. The provincial contact coordinates
+            follow-up and escalation when additional help is needed.
+          </p>
+        </div>
+
+        <div className="hd-contact-grid">
+          {helpDeskContacts.map((contact) => {
+            const initials =
+              `${contact.firstName?.charAt(0) || ""}${contact.lastName?.charAt(0) || ""}`.toUpperCase();
+
+            return (
+              <article className="hd-contact-card" key={contact.province}>
+                <div className="hd-contact-top">
+                  <div className="hd-avatar">{initials}</div>
+                  <span className="hd-province">{contact.province}</span>
+                </div>
+
+                <h3>{contact.firstName} {contact.lastName}</h3>
+                <p>Provincial Help Desk Focal Person</p>
+
+                <a
+                  className="hd-phone"
+                  href={`tel:+260${String(contact.phone).replace(/^0/, "")}`}
+                >
+                  {contact.phone}
+                </a>
+              </article>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className="hd-bottom-grid">
+        <article className="hd-guidance-card">
+          <h3>Before contacting support</h3>
           <ul>
             <li>State your province, district, facility, name, and callback number.</li>
             <li>Describe the affected eLMIS module or task and the exact error message.</li>
@@ -395,73 +719,130 @@ function HelpDeskPage() {
             <li>Never share passwords, PINs, or one-time security codes.</li>
           </ul>
         </article>
-        <article className="help-desk-note panel escalation-note">
-          <h2>First tier, then escalation</h2>
-          <p>District superusers handle common operational problems close to the facility. Provincial personnel coordinate complex cases, reinforce skills through remote guidance or on-the-job support, and send unresolved cases to the national team with complete troubleshooting notes.</p>
-          <div className="support-statuses"><span>Acknowledge</span><i>→</i><span>Diagnose</span><i>→</i><span>Resolve or escalate</span><i>→</i><span>Confirm closure</span></div>
+
+        <article className="hd-guidance-card">
+          <h3>First tier, then escalation</h3>
+          <p>
+            District superusers handle common operational problems close to the facility.
+            Provincial personnel coordinate complex cases, reinforce skills through remote
+            guidance or on-the-job support, and send unresolved cases to the national team
+            with complete troubleshooting notes.
+          </p>
+
+          <div className="hd-escalation-flow">
+            <span>Acknowledge</span>
+            <b>→</b>
+            <span>Diagnose</span>
+            <b>→</b>
+            <span>Resolve or escalate</span>
+            <b>→</b>
+            <span>Confirm closure</span>
+          </div>
         </article>
       </section>
 
-      <p className="help-desk-source-note">Support approach informed by Zambia's eLMIS superuser model and established eLMIS help-desk practices.</p>
+      <p className="hd-footer-note">
+        Support approach informed by Zambia's eLMIS superuser model and established eLMIS help-desk practices.
+      </p>
+
     </section>
   );
 }
 
 function LatestUpdatesPage() {
-  const handoverPhotos = [
-    ["help-desk-handover-western.jpeg", "The Chief Pharmacist – Logistics presents help-desk equipment to a provincial eLMIS expert."],
-    ["help-desk-recipients.jpeg", "Provincial recipients with the laptop and Bluetooth headset support package."],
-    ["help-desk-handover-northern.jpeg", "Official handover of a laptop and Bluetooth headset for provincial eLMIS support."],
-    ["help-desk-handover-headset.jpeg", "Bluetooth headset and laptop supplied to strengthen real-time troubleshooting."],
-    ["help-desk-handover-laptop.jpeg", "Equipment handover supporting the provincial first-tier help-desk model."],
-  ];
-
   return (
     <section className="updates-page">
-      <header className="updates-hero panel">
+
+      <section className="updates-hero">
         <div>
           <span className="updates-kicker">eLMIS Newsroom</span>
           <h2>Latest Updates</h2>
-          <p>System releases, digital-health integration milestones, and provincial support initiatives strengthening Zambia's logistics information and help-desk network.</p>
+          <p>
+            System releases, digital-health integration milestones, and provincial
+            support initiatives strengthening Zambia's logistics information and
+            help-desk network.
+          </p>
         </div>
+
         <div className="updates-hero-meta">
           <span>System update</span>
           <span>Digital integration</span>
           <span>Provincial support</span>
         </div>
-      </header>
+      </section>
 
-      <article className="release-story panel">
-        <div className="release-version" aria-label="eLMIS Facility Edition version 4.4.5">
+      <article className="release-story">
+        <div className="release-version">
           <span>Facility Edition</span>
           <strong>v4.4.5</strong>
           <small>Now live</small>
         </div>
+
         <div className="release-copy">
-          <span className="story-label">Release notice</span>
+          <span className="story-label">Release Notice</span>
           <h2>eLMIS Facility Edition v4.4.5 is now live</h2>
-          <p>Kindly note that eLMIS Facility Edition (FE) v4.4.5 has been released. One of the key issues resolved is the R&amp;R validation error that caused some products to be incorrectly highlighted in red during report submission.</p>
-          <div className="release-callout"><b>What changed</b><span>The corrected validation behaviour should help users review and submit R&amp;R reports with clearer product-level feedback.</span></div>
+
+          <p>
+            Kindly note that eLMIS Facility Edition (FE) v4.4.5 has been released.
+            One of the key issues resolved is the R&R validation error that caused
+            some products to be incorrectly highlighted in red during report submission.
+          </p>
+
+          <div className="release-callout">
+            <b>What changed</b>
+            <span>
+              The corrected validation behaviour should help users review and submit
+              R&R reports with clearer product-level feedback.
+            </span>
+          </div>
         </div>
       </article>
 
       <section className="updates-story-grid">
-        <article className="integration-story panel">
-          <div className="integration-mark" aria-hidden="true"><span>eLMIS</span><i>↔</i><span>SmartCare</span></div>
+
+        <article className="integration-story">
+          <div className="integration-mark">
+            <span>eLMIS</span>
+            <i>↔</i>
+            <span>SmartCare</span>
+          </div>
+
           <div className="story-body">
-            <span className="story-label">Digital health integration</span>
+            <span className="story-label">Digital Health Integration</span>
             <h2>Connecting eLMIS and SmartCare</h2>
-            <p>The integration of eLMIS and SmartCare supports a more connected digital-health environment by improving the flow of service and logistics information between systems. The goal is to reduce duplicate data entry, strengthen data consistency, and make timely commodity information more useful for reporting, planning, and supply-chain decisions.</p>
-            <p>As functionality is introduced, facilities should follow approved implementation notices, user guidance, and support channels. District superusers and provincial help-desk focal persons will assist users and escalate technical issues that require national support.</p>
+
+            <p>
+              The integration of eLMIS and SmartCare supports a more connected
+              digital-health environment by improving the flow of service and
+              logistics information between systems.
+            </p>
+
+            <p>
+              The goal is to reduce duplicate data entry, strengthen data consistency,
+              and make timely commodity information more useful for reporting,
+              planning and supply-chain decision-making.
+            </p>
           </div>
         </article>
 
-        <article className="support-impact panel">
+        <article className="support-impact">
           <div className="story-body">
-            <span className="story-label">Provincial help desks</span>
+            <span className="story-label">Provincial Help Desks</span>
             <h2>Equipment strengthens first-tier support</h2>
-            <p><b>The Chief Pharmacist – Logistics, Mr. Luke Alutuli,</b> has officially handed over laptops and Bluetooth headsets to Northern Province and Western Province eLMIS experts as part of the Ministry's continued work to strengthen provincial eLMIS Help Desks.</p>
-            <p>The equipment will improve communication during troubleshooting and remote guidance, helping provincial teams provide faster, better-coordinated technical assistance to health facilities.</p>
+
+            <p>
+              The Chief Pharmacist – Logistics, Mr. Luke Alutuli, has officially
+              handed over laptops and Bluetooth headsets to Northern Province and
+              Western Province eLMIS experts as part of the Ministry's continued
+              work to strengthen provincial eLMIS Help Desks.
+            </p>
+
+            <p>
+              The equipment will improve communication during troubleshooting and
+              remote guidance, helping provincial teams provide faster, better-
+              coordinated technical assistance.
+            </p>
+
             <div className="impact-points">
               <span><b>Faster response</b> for facility support requests</span>
               <span><b>Remote guidance</b> for district teams and users</span>
@@ -469,23 +850,75 @@ function LatestUpdatesPage() {
             </div>
           </div>
         </article>
+
       </section>
 
-      <section className="updates-gallery" aria-labelledby="handover-gallery-title">
+
+      <section className="updates-gallery">
         <div className="section-heading">
-          <span>In pictures</span>
-          <h2 id="handover-gallery-title">Provincial help-desk equipment handover</h2>
-          <p>The initiative supports the Ministry's target for every province to establish a first-tier help desk for timely troubleshooting, improved reporting, and stronger digital logistics management.</p>
+          <span>In Pictures</span>
+          <h2>Provincial help-desk equipment handover</h2>
+          <p>
+            The initiative supports the Ministry's target for every province to establish
+            a first-tier help desk for timely troubleshooting, improved reporting, and
+            stronger digital logistics management.
+          </p>
         </div>
+
         <div className="handover-photo-grid">
-          {handoverPhotos.map(([file, caption], index) => (
-            <figure className={`handover-photo ${index === 0 ? "featured" : ""}`} key={file}>
-              <img src={`./latest-updates/${file}`} alt={caption} loading={index > 1 ? "lazy" : "eager"} />
-              <figcaption>{caption}</figcaption>
-            </figure>
-          ))}
+          <figure className="handover-photo featured">
+            <img
+              src="./latest-updates/help-desk-handover-western.jpeg"
+              alt="Chief Pharmacist Logistics presenting help-desk equipment to a provincial eLMIS expert"
+            />
+            <figcaption>
+              The Chief Pharmacist – Logistics presents help-desk equipment to a provincial eLMIS expert.
+            </figcaption>
+          </figure>
+
+          <figure className="handover-photo">
+            <img
+              src="./latest-updates/help-desk-recipients.jpeg"
+              alt="Provincial recipients with help-desk support equipment"
+            />
+            <figcaption>
+              Provincial recipients with the laptop and Bluetooth headset support package.
+            </figcaption>
+          </figure>
+
+          <figure className="handover-photo">
+            <img
+              src="./latest-updates/help-desk-handover-northern.jpeg"
+              alt="Official handover of provincial eLMIS support equipment"
+            />
+            <figcaption>
+              Official handover of a laptop and Bluetooth headset for provincial eLMIS support.
+            </figcaption>
+          </figure>
+
+          <figure className="handover-photo">
+            <img
+              src="./latest-updates/help-desk-handover-headset.jpeg"
+              alt="Bluetooth headset and laptop supplied to strengthen eLMIS troubleshooting"
+            />
+            <figcaption>
+              Bluetooth headset and laptop supplied to strengthen real-time troubleshooting.
+            </figcaption>
+          </figure>
+
+          <figure className="handover-photo">
+            <img
+              src="./latest-updates/help-desk-handover-laptop.jpeg"
+              alt="Equipment handover supporting the provincial first-tier help-desk model"
+            />
+            <figcaption>
+              Equipment handover supporting the provincial first-tier help-desk model.
+            </figcaption>
+          </figure>
         </div>
       </section>
+
+
     </section>
   );
 }
@@ -550,26 +983,27 @@ function TrainingPage({ totals, participants, facilityKpis }) {
   const users = participants.filter((person) => person.role === "User");
   const professionCounts = countBy(participants, "profession");
   const facilityTraining = linkTrainingToFacilities(facilityKpis, participants);
+  const professionRows = Object.entries(professionCounts).map(([profession, count]) => ({ profession, count }));
 
   return (
     <>
       <KpiGrid items={[
-        ["Issues Resolved", totals.issuesResolved],
-        ["Superusers Trained", totals.superusers],
-        ["Experts Trained", totals.experts],
-        ["Users Trained", totals.users],
-        ["Training Districts", totals.trainingDistricts],
+        { label: "Issues Resolved", value: totals.issuesResolved, title: "Resolved Training and Support Issues", rows: facilityTraining.filter((row) => Number(row.reportingRate) >= 100), columns: ["district", "facility", "trained", "reportingRate", "timeliness"] },
+        { label: "Superusers Trained", value: totals.superusers, title: "Superusers Trained", rows: superusers, columns: ["province", "district", "facility", "firstName", "lastName", "profession", "phone"] },
+        { label: "Experts Trained", value: totals.experts, title: "Experts Trained", rows: experts, columns: ["province", "district", "facility", "firstName", "lastName", "profession", "phone"] },
+        { label: "Users Trained", value: totals.users, title: "Users Trained", rows: users, columns: ["province", "district", "facility", "firstName", "lastName", "profession", "phone"] },
+        { label: "Training Districts", value: totals.trainingDistricts, title: "Training District Coverage", rows: unique(participants.map((p) => `${p.province}|${p.district}`)).map((key) => { const [province, district] = key.split("|"); return { province, district, trained: participants.filter((p) => p.province === province && p.district === district).length }; }), columns: ["province", "district", "trained"] },
       ]} />
       <section className="grid training-grid">
         <div className="stack">
-          <Panel title="List of Experts"><PeopleTable rows={experts} /></Panel>
-          <Panel title="List of Superusers"><PeopleTable rows={superusers} /></Panel>
-          <Panel title="List of Users"><PeopleTable rows={users} /></Panel>
+          <Panel title="List of Experts" detailRows={experts} detailColumns={["province", "district", "facility", "firstName", "lastName", "profession", "phone"]}><PeopleTable rows={experts} /></Panel>
+          <Panel title="List of Superusers" detailRows={superusers} detailColumns={["province", "district", "facility", "firstName", "lastName", "profession", "phone"]}><PeopleTable rows={superusers} /></Panel>
+          <Panel title="List of Users" detailRows={users} detailColumns={["province", "district", "facility", "firstName", "lastName", "profession", "phone"]}><PeopleTable rows={users} /></Panel>
         </div>
         <div className="stack">
-          <Panel title="Participant Professions by Province"><StackedBar counts={professionCounts} /></Panel>
-          <Panel title="Ratio of Professions"><Donut counts={professionCounts} /></Panel>
-          <Panel title="Training Connected to Facility KPIs"><DataTable rows={facilityTraining} columns={["district", "facility", "trained", "reportingRate", "timeliness"]} /></Panel>
+          <Panel title="Participant Professions by Province" detailRows={professionRows} detailColumns={["profession", "count"]}><StackedBar counts={professionCounts} /></Panel>
+          <Panel title="Ratio of Professions" detailRows={professionRows} detailColumns={["profession", "count"]}><Donut counts={professionCounts} /></Panel>
+          <Panel title="Training Connected to Facility KPIs" detailRows={facilityTraining} detailColumns={["province", "district", "facility", "trained", "reportingRate", "timeliness"]}><DataTable rows={facilityTraining} columns={["district", "facility", "trained", "reportingRate", "timeliness"]} /></Panel>
         </div>
       </section>
     </>
@@ -585,11 +1019,14 @@ function KpiGrid({ items }) {
         return (
           <button
             type="button"
-            className={`kpi ${clickable ? "clickable" : ""}`}
+            className={`kpi ${card.tone ? `kpi-${card.tone}` : ""} ${clickable ? "clickable" : ""}`.trim()}
             key={card.label}
             onClick={clickable ? () => openDetailWindow(card.title || card.label, card.rows, card.columns) : undefined}
           >
-            <span>{card.label}</span>
+            <div className="kpi-label-row">
+              {card.icon && <i className="kpi-icon" aria-hidden="true">{card.icon}</i>}
+              <span>{card.label}</span>
+            </div>
             <strong>{card.value}</strong>
           </button>
         );
@@ -598,8 +1035,12 @@ function KpiGrid({ items }) {
   );
 }
 
-function Panel({ title, children, className = "" }) {
-  return <article className={`panel ${className}`.trim()}><h2>{title}</h2>{children}</article>;
+function Panel({ title, children, className = "", detailRows, detailColumns }) {
+  const expandable = Array.isArray(detailRows) && Array.isArray(detailColumns);
+  return <article className={`panel ${className}`.trim()}>
+    <div className="panel-heading"><h2>{title}</h2>{expandable && <button type="button" className="panel-expand" onClick={() => openDetailWindow(title, detailRows, detailColumns)}>Expand ↗</button>}</div>
+    {children}
+  </article>;
 }
 
 function FilterGroup({ title, items, selected, onSelect }) {
@@ -611,6 +1052,21 @@ function FilterGroup({ title, items, selected, onSelect }) {
       </select>
     </section>
   );
+}
+
+function PageTicker({ activePage, totals, participants, followUps, period, province }) {
+  const scope = province === "All" ? "National" : province;
+  const messages = {
+    executive: `${period} | ${scope} reporting ${totals.reportingRate.toFixed(1)}% | Timeliness ${totals.timeliness.toFixed(1)}% | ${totals.nonReportingFacilities ?? totals.nonReporting} non-reporting facilities | ${participants.length} trained eLMIS personnel`,
+    reports: `${period} | ${scope} reporting ${totals.reportingRate.toFixed(1)}% | ${totals.facilitiesReported ?? totals.reporting} facilities reported | ${totals.nonReportingFacilities ?? totals.nonReporting} non-reporting facilities | ${totals.districts} districts`,
+    training: `${participants.length} trained eLMIS personnel | ${totals.experts} experts | ${totals.superusers} superusers | ${totals.users} users`,
+    tasks: `${totals.nonReportingFacilities ?? totals.nonReporting} facilities require reporting follow-up | ${followUps.lateDistricts.length} late-reporting follow-ups`,
+    trainings: `${participants.length} trained eLMIS personnel | ${totals.trainingDistricts} training districts | ${totals.experts} experts | ${totals.superusers} superusers`,
+    helpdesk: `eLMIS Help Desk | Provincial support contacts across all 10 provinces | Escalate unresolved issues through the national support pathway`,
+    updates: `Latest eLMIS updates | System support, integration, training and implementation milestones | NSCCU Control Tower`,
+  };
+  const tickerText = messages[activePage] || messages.executive;
+  return <div className="ticker page-ticker"><div className="ticker-track"><span>{tickerText}</span><span>{tickerText}</span></div></div>;
 }
 
 function ProvinceTicker({ values }) {
@@ -632,11 +1088,47 @@ function InsightStrip({ insights }) {
     <section className="insight-strip" aria-label="Dashboard insights">
       {insights.map((insight) => (
         <article key={insight.text} className={`insight ${insight.tone}`}>
-          <b>{insight.label}</b>
+          <div className="insight-heading">
+            <i aria-hidden="true">{insightIcon(insight.label)}</i>
+            <b>{insight.label}</b>
+          </div>
           <span>{insight.text}</span>
         </article>
       ))}
     </section>
+  );
+}
+
+function insightIcon(label) {
+  const key = String(label || "").toLowerCase();
+  if (key.includes("reporting")) return "△";
+  if (key.includes("arv")) return "◇";
+  if (key.includes("training")) return "◎";
+  return "•";
+}
+
+function PriorityActionList({ rows }) {
+  if (!rows.length) return <div className="empty-state">No priority actions for the current selection.</div>;
+
+  return (
+    <div className="priority-action-list">
+      {rows.map((row, index) => {
+        const status = String(row.status || "Open");
+        const statusClass = status.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+        const severity = /facility has not reported|low reporting/i.test(row.issue || "") ? "critical" : /late/i.test(row.issue || "") ? "warning" : "info";
+        return (
+          <article key={`${row.issue}-${index}`} className={`priority-action priority-${severity}`}>
+            <div className="priority-copy">
+              <strong>{row.issue}</strong>
+              <span>{row.provinceDistrict}</span>
+              <small>{row.actionRequired}</small>
+              <em>{row.responsible}{row.dueDate ? ` · due ${row.dueDate}` : ""}</em>
+            </div>
+            <span className={`status-badge status-${statusClass}`}>{status}</span>
+          </article>
+        );
+      })}
+    </div>
   );
 }
 
@@ -791,7 +1283,8 @@ function DetailPage({ payload }) {
           <p>{rows.length.toLocaleString()} record{rows.length === 1 ? "" : "s"}</p>
         </div>
         <div className="detail-actions">
-          <button type="button" onClick={() => window.print()}>Print</button>
+          <button type="button" className="detail-back" onClick={() => { window.location.hash = ""; }}>← Back to Dashboard</button>
+          <button type="button" onClick={() => window.print()}>Export PDF</button>
           <button type="button" onClick={() => downloadCsv(payload.title, rows)}>Export CSV</button>
         </div>
       </header>
