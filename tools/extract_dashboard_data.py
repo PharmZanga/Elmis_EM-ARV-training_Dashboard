@@ -10,7 +10,6 @@ from pathlib import Path
 
 import openpyxl
 
-
 SOURCE_DIR = Path(r"C:\Users\Zanga Musakuzi\Desktop\ELMIS DASH BOARD\eLMIS Final Draft_20260226")
 PROJECT_DIR = Path(__file__).resolve().parents[1]
 OUT_FILE = PROJECT_DIR / "src" / "dashboardData.js"
@@ -26,17 +25,15 @@ def clean(value):
 
 
 def normalized_code(value):
-    text = clean(value).upper()
-    text = re.sub(r"[^A-Z0-9]", "", text)
-    # Excel sometimes turns numeric facility codes into values such as 101052.0.
-    if text.endswith("0") and clean(value).endswith(".0"):
+    raw = clean(value)
+    text = re.sub(r"[^A-Z0-9]", "", raw.upper())
+    if raw.endswith(".0") and text.endswith("0"):
         text = text[:-1]
     return text.lstrip("0") or text
 
 
 def normalized_name(value):
-    text = clean(value).casefold()
-    text = text.replace("centre", "center")
+    text = clean(value).casefold().replace("centre", "center")
     text = re.sub(r"\brural health center\b", "rhc", text)
     text = re.sub(r"\bhealth center\b", "hc", text)
     text = re.sub(r"\bhealth post\b", "hp", text)
@@ -59,10 +56,10 @@ def period_label(value):
 def read_rows(path, sheet_name):
     workbook = openpyxl.load_workbook(path, read_only=True, data_only=True)
     sheet = workbook[sheet_name]
-    headers = [clean(cell) for cell in next(sheet.iter_rows(min_row=1, max_row=1, values_only=True))]
+    headers = [clean(x) for x in next(sheet.iter_rows(min_row=1, max_row=1, values_only=True))]
     for row in sheet.iter_rows(min_row=2, values_only=True):
-        record = {headers[index]: row[index] if index < len(row) else None for index in range(len(headers))}
-        if any(value is not None and clean(value) != "" for value in record.values()):
+        record = {headers[i]: row[i] if i < len(row) else None for i in range(len(headers))}
+        if any(v is not None and clean(v) != "" for v in record.values()):
             yield record
 
 
@@ -85,10 +82,24 @@ def load_elmis_facility_metadata():
         )
         with connection.cursor() as cursor:
             cursor.execute('''
-                SELECT id, code, name, type, district_name, "provence" AS province
-                FROM public.dim_facility
-                WHERE code IS NOT NULL AND BTRIM(code) <> ''
-                ORDER BY code
+                SELECT
+                    f.id,
+                    f.code,
+                    f.name,
+                    COALESCE(df.type, '') AS facility_type,
+                    d.name AS district,
+                    p.name AS province
+                FROM public.facilities f
+                LEFT JOIN public.geographic_zones d
+                    ON f.geographiczoneid = d.id
+                LEFT JOIN public.geographic_zones p
+                    ON d.parentid = p.id
+                LEFT JOIN public.dim_facility df
+                    ON UPPER(BTRIM(df.code)) = UPPER(BTRIM(f.code))
+                WHERE f.code IS NOT NULL
+                  AND BTRIM(f.code) <> ''
+                  AND d.levelid = 3
+                ORDER BY f.code
             ''')
             rows = cursor.fetchall()
 
@@ -103,12 +114,12 @@ def load_elmis_facility_metadata():
                 "province": clean(province),
             }
             by_code[item["code"].upper()] = item
+            by_norm_code.setdefault(normalized_code(item["code"]), item)
             if item["name"]:
                 by_name.setdefault(item["name"].casefold(), item)
                 by_norm_name.setdefault(normalized_name(item["name"]), item)
-            by_norm_code.setdefault(normalized_code(item["code"]), item)
 
-        print(f"eLMIS metadata: loaded {len(by_code)} facilities from public.dim_facility")
+        print(f"eLMIS metadata: loaded {len(by_code)} facilities from public.facilities + geographic hierarchy")
         return by_code, by_name, by_norm_code, by_norm_name
     except Exception as exc:
         print(f"eLMIS metadata: database unavailable ({exc}); using Excel facility fields.")
@@ -125,10 +136,14 @@ def authoritative_facility(row):
     code = clean(row.get("Facility Code")).upper()
     if code and code in FACILITIES_BY_CODE:
         return FACILITIES_BY_CODE[code]
+    ncode = normalized_code(row.get("Facility Code"))
+    if ncode and ncode in FACILITIES_BY_NORM_CODE:
+        return FACILITIES_BY_NORM_CODE[ncode]
     name = clean(row.get("Facility"))
-    if name:
-        return FACILITIES_BY_NAME.get(name.casefold())
-    return None
+    if name and name.casefold() in FACILITIES_BY_NAME:
+        return FACILITIES_BY_NAME[name.casefold()]
+    nname = normalized_name(name)
+    return FACILITIES_BY_NORM_NAME.get(nname) if nname else None
 
 
 def participants():
@@ -138,11 +153,17 @@ def participants():
     for sheet, role in sheets.items():
         for row in read_rows(path, sheet):
             records.append({
-                "role": role, "province": clean(row.get("Province")), "district": clean(row.get("District")),
-                "firstName": clean(row.get("First Name")), "lastName": clean(row.get("Last Name")),
-                "phone": clean(row.get("Mobile Phone")), "nrc": clean(row.get("NRC")),
-                "facility": clean(row.get("Duty Station")), "profession": clean(row.get("Profession")).title() or "Not Specified",
-                "startDate": clean(row.get("Start Date")), "endDate": clean(row.get("End Date")),
+                "role": role,
+                "province": clean(row.get("Province")),
+                "district": clean(row.get("District")),
+                "firstName": clean(row.get("First Name")),
+                "lastName": clean(row.get("Last Name")),
+                "phone": clean(row.get("Mobile Phone")),
+                "nrc": clean(row.get("NRC")),
+                "facility": clean(row.get("Duty Station")),
+                "profession": clean(row.get("Profession")).title() or "Not Specified",
+                "startDate": clean(row.get("Start Date")),
+                "endDate": clean(row.get("End Date")),
                 "issuesResolved": int(row.get("Issues Resolved") or 0),
             })
     return records
@@ -153,16 +174,20 @@ def reporting_rows():
     records, matched, unmatched = [], 0, 0
     for row in read_rows(path, "Page 1"):
         meta = authoritative_facility(row)
-        matched += bool(meta)
-        unmatched += not bool(meta)
+        if meta:
+            matched += 1
+        else:
+            unmatched += 1
         records.append({
             "facilityCode": meta["code"] if meta else clean(row.get("Facility Code")),
             "facility": meta["name"] if meta else clean(row.get("Facility")),
-            "facilityType": meta["type"] if meta else clean(row.get("Facility type")),
+            "facilityType": (meta["type"] if meta and meta["type"] else clean(row.get("Facility type"))),
             "province": meta["province"] if meta else clean(row.get("Province")),
             "district": meta["district"] if meta else clean(row.get("District")),
-            "program": clean(row.get("Program")), "period": period_label(row.get("Period")),
-            "dateReceived": clean(row.get("Date Report Received")), "status": clean(row.get("Status")),
+            "program": clean(row.get("Program")),
+            "period": period_label(row.get("Period")),
+            "dateReceived": clean(row.get("Date Report Received")),
+            "status": clean(row.get("Status")),
             "metadataMatched": bool(meta),
         })
     if FACILITIES_BY_CODE:
@@ -174,18 +199,25 @@ def timeliness_rows():
     path = SOURCE_DIR / "Timeliness Reporting Masterfile.xlsx"
     records = []
     for row in read_rows(path, "Page 1"):
-        expected, on_time, late = int(row.get("Expected") or 0), int(row.get("Reported On Time") or 0), int(row.get("Reported Late") or 0)
+        expected = int(row.get("Expected") or 0)
+        on_time = int(row.get("Reported On Time") or 0)
+        late = int(row.get("Reported Late") or 0)
         records.append({
-            "district": clean(row.get("District")), "province": clean(row.get("Region")),
-            "supplyingDepot": clean(row.get("Supplying Depot")), "expected": expected,
-            "reportedOnTime": on_time, "reportedLate": late, "period": period_label(row.get("Period")),
-            "program": clean(row.get("Program")), "timeliness": round((on_time / expected) * 100, 2) if expected else 0,
+            "district": clean(row.get("District")),
+            "province": clean(row.get("Region")),
+            "supplyingDepot": clean(row.get("Supplying Depot")),
+            "expected": expected,
+            "reportedOnTime": on_time,
+            "reportedLate": late,
+            "period": period_label(row.get("Period")),
+            "program": clean(row.get("Program")),
+            "timeliness": round((on_time / expected) * 100, 2) if expected else 0,
         })
     return records
 
 
 def facility_metadata():
-    return sorted(FACILITIES_BY_CODE.values(), key=lambda item: (item["province"], item["district"], item["name"]))
+    return sorted(FACILITIES_BY_CODE.values(), key=lambda x: (x["province"], x["district"], x["name"]))
 
 
 def export_unmatched_report():
@@ -209,21 +241,14 @@ def export_unmatched_report():
         writer = csv.DictWriter(handle, fieldnames=fields)
         writer.writeheader()
         for (code, name, district, province), detail in sorted(grouped.items(), key=lambda x: (-x[1]["rows"], x[0][1])):
-            suggestion = None
-            category = "NOT_IN_METADATA"
-            score = 0.0
-
+            suggestion, category, score = None, "NOT_IN_METADATA", 0.0
             ncode = normalized_code(code)
             if ncode and ncode in FACILITIES_BY_NORM_CODE:
-                suggestion = FACILITIES_BY_NORM_CODE[ncode]
-                category = "CODE_FORMAT_DIFFERENCE"
-                score = 1.0
+                suggestion, category, score = FACILITIES_BY_NORM_CODE[ncode], "CODE_FORMAT_DIFFERENCE", 1.0
             else:
                 nname = normalized_name(name)
                 if nname and nname in FACILITIES_BY_NORM_NAME:
-                    suggestion = FACILITIES_BY_NORM_NAME[nname]
-                    category = "NAME_FORMAT_DIFFERENCE"
-                    score = 1.0
+                    suggestion, category, score = FACILITIES_BY_NORM_NAME[nname], "NAME_FORMAT_DIFFERENCE", 1.0
                 elif nname:
                     candidates = list(FACILITIES_BY_CODE.values())
                     same_district = [x for x in candidates if clean(x["district"]).casefold() == district.casefold()]
@@ -235,16 +260,22 @@ def export_unmatched_report():
                         if best is None or similarity > best[0]:
                             best = (similarity, candidate)
                     if best and best[0] >= 0.86:
-                        score, suggestion = best
-                        category = "POSSIBLE_NAME_MATCH"
+                        score, suggestion, category = best[0], best[1], "POSSIBLE_NAME_MATCH"
 
             categories[category] += 1
             writer.writerow({
-                "facility_code": code, "facility_name": name, "district": district, "province": province,
-                "reporting_rows": detail["rows"], "programs": " | ".join(sorted(x for x in detail["programs"] if x)),
-                "periods": " | ".join(sorted(x for x in detail["periods"] if x)), "reconciliation_category": category,
-                "suggested_elmis_code": suggestion["code"] if suggestion else "", "suggested_elmis_name": suggestion["name"] if suggestion else "",
-                "suggested_district": suggestion["district"] if suggestion else "", "suggested_province": suggestion["province"] if suggestion else "",
+                "facility_code": code,
+                "facility_name": name,
+                "district": district,
+                "province": province,
+                "reporting_rows": detail["rows"],
+                "programs": " | ".join(sorted(x for x in detail["programs"] if x)),
+                "periods": " | ".join(sorted(x for x in detail["periods"] if x)),
+                "reconciliation_category": category,
+                "suggested_elmis_code": suggestion["code"] if suggestion else "",
+                "suggested_elmis_name": suggestion["name"] if suggestion else "",
+                "suggested_district": suggestion["district"] if suggestion else "",
+                "suggested_province": suggestion["province"] if suggestion else "",
                 "name_similarity": f"{score:.3f}" if score else "",
             })
 
@@ -255,12 +286,14 @@ def export_unmatched_report():
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--export-unmatched", action="store_true", help="Export unique unmatched facilities with reconciliation suggestions")
+    parser.add_argument("--export-unmatched", action="store_true")
     args = parser.parse_args()
 
     data = {
-        "participants": participants(), "reportingRows": reporting_rows(),
-        "timelinessRows": timeliness_rows(), "facilityMetadata": facility_metadata(),
+        "participants": participants(),
+        "reportingRows": reporting_rows(),
+        "timelinessRows": timeliness_rows(),
+        "facilityMetadata": facility_metadata(),
     }
     OUT_FILE.write_text("export const dashboardData = " + json.dumps(data, ensure_ascii=False, separators=(",", ":")) + ";\n", encoding="utf-8")
     print(f"Wrote {OUT_FILE}")
