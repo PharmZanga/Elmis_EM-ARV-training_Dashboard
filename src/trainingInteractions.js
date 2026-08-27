@@ -1,145 +1,64 @@
 import { dashboardData } from "./dashboardData.js";
 
-const { participants = [], reportingRows = [] } = dashboardData;
+const { participants = [] } = dashboardData;
 
 const css = `
-.training-detail-overlay{position:fixed;inset:0;z-index:9999;background:#f4f7f5;overflow:auto;color:#063f33;font-family:inherit}
-.training-detail-shell{max-width:1500px;margin:0 auto;padding:22px 26px 36px}
-.training-detail-top{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;margin-bottom:18px}
-.training-detail-back,.training-detail-export{border:1px solid #cbd9d3;background:#fff;border-radius:8px;padding:10px 14px;font-weight:800;cursor:pointer;color:#063f33}
-.training-detail-export{background:#078348;color:#fff;border-color:#078348}
-.training-detail-actions{display:flex;gap:10px;flex-wrap:wrap}
-.training-detail-title{margin:12px 0 4px;font-size:28px;line-height:1.15}.training-detail-sub{margin:0;color:#64736d}
-.training-detail-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:18px 0}
-.training-detail-kpi{background:#fff;border:1px solid #dce6e1;border-radius:10px;padding:17px 18px;box-shadow:0 8px 20px rgba(18,55,43,.05);border-top:3px solid #0b8750}
-.training-detail-kpi span{display:block;font-size:12px;font-weight:900;color:#5d6d67;text-transform:uppercase;letter-spacing:.03em}.training-detail-kpi strong{display:block;font-size:30px;margin-top:8px;color:#063f33}.training-detail-kpi small{display:block;margin-top:4px;color:#6a7973}
-.training-detail-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:14px;margin:14px 0}.training-detail-card{background:#fff;border:1px solid #dce6e1;border-radius:10px;padding:16px;box-shadow:0 8px 20px rgba(18,55,43,.04)}
-.training-detail-card h3{margin:0 0 13px;font-size:16px}.training-detail-table-wrap{overflow:auto;max-height:430px}.training-detail-table{width:100%;border-collapse:collapse;font-size:13px}.training-detail-table th{position:sticky;top:0;background:#f3f7f5;text-align:left;padding:10px;border-bottom:1px solid #dce6e1;white-space:nowrap}.training-detail-table td{padding:9px 10px;border-bottom:1px solid #edf1ef;vertical-align:top}.training-detail-table tfoot td{font-weight:900;background:#f7faf8}
-.training-detail-donut-row{display:flex;align-items:center;justify-content:center;gap:26px;min-height:240px}.training-detail-donut{width:160px;height:160px;border-radius:50%;position:relative}.training-detail-donut:after{content:'';position:absolute;inset:32px;border-radius:50%;background:#fff}.training-detail-legend{display:grid;gap:10px}.training-detail-legend span{display:flex;align-items:center;gap:8px;color:#4c5c56}.training-detail-dot{width:10px;height:10px;border-radius:50%;display:inline-block}
-.training-detail-bars{display:flex;align-items:flex-end;gap:12px;height:220px;padding:18px 8px 28px;border-bottom:1px solid #dde6e2}.training-detail-bar{flex:1;min-width:28px;text-align:center;position:relative;height:100%;display:flex;align-items:flex-end}.training-detail-bar i{display:block;width:100%;background:#39a86d;border-radius:5px 5px 0 0;min-height:3px}.training-detail-bar span{position:absolute;bottom:-24px;left:50%;transform:translateX(-50%);font-size:11px;color:#65746e;white-space:nowrap}.training-detail-bar b{position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:11px;color:#164b3c}
-.training-detail-empty{padding:40px;text-align:center;color:#6b7974}
-body.training-detail-open{overflow:hidden}.kpi-grid .kpi,.province-card{cursor:pointer}.kpi-grid .kpi:hover,.province-card:hover{box-shadow:0 10px 26px rgba(7,106,66,.12);transform:translateY(-2px);transition:.15s ease}
-@media(max-width:900px){.training-detail-kpis{grid-template-columns:repeat(2,1fr)}.training-detail-grid{grid-template-columns:1fr}.training-detail-shell{padding:16px}}
-@media print{body>*:not(.training-detail-overlay){display:none!important}.training-detail-overlay{position:static}.training-detail-back,.training-detail-export{display:none!important}.training-detail-table-wrap{max-height:none;overflow:visible}}
+.training-detail-overlay{position:fixed;inset:0;z-index:9999;background:rgba(8,32,25,.38);backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;padding:24px;color:#063f33;font-family:inherit}
+.training-detail-shell{width:min(1040px,94vw);max-height:86vh;overflow:hidden;background:#fff;border:1px solid #d7e2dd;border-radius:14px;box-shadow:0 28px 80px rgba(0,45,32,.28);display:flex;flex-direction:column}
+.training-detail-head{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;padding:20px 22px 14px;border-bottom:1px solid #e5ece8;background:#fff}
+.training-detail-title{margin:0;font-size:22px;line-height:1.2;color:#062f27}.training-detail-sub{margin:5px 0 0;color:#64736d;font-size:13px}
+.training-detail-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.training-detail-export,.training-detail-close{border:1px solid #cbd9d3;background:#fff;border-radius:7px;padding:9px 12px;font-weight:800;cursor:pointer;color:#07583e}.training-detail-export:hover,.training-detail-close:hover{background:#eef8f2}.training-detail-close{font-size:18px;line-height:1;padding:8px 10px}
+.training-detail-body{padding:16px 18px 18px;overflow:auto}.training-detail-filters{display:grid;grid-template-columns:1.15fr 1fr 1fr 1.2fr auto;gap:9px;align-items:end;margin-bottom:14px;padding:12px;background:#f7faf8;border:1px solid #e0e9e4;border-radius:9px}.training-detail-filter label{display:block;font-size:10px;font-weight:900;text-transform:uppercase;color:#61716b;margin-bottom:5px}.training-detail-filter select,.training-detail-filter input{width:100%;height:37px;border:1px solid #ccd9d3;border-radius:7px;background:#fff;padding:0 10px;color:#123f34}.training-detail-reset{height:37px;border:0;border-radius:7px;background:#087f49;color:#fff;padding:0 14px;font-weight:800;cursor:pointer}
+.training-detail-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:0 0 14px}.training-detail-kpi{background:#fff;border:1px solid #dce6e1;border-radius:9px;padding:12px 13px;box-shadow:0 5px 14px rgba(18,55,43,.04);border-left:3px solid #0b8750}.training-detail-kpi span{display:block;font-size:10px;font-weight:900;color:#5d6d67;text-transform:uppercase}.training-detail-kpi strong{display:block;font-size:24px;margin-top:5px;color:#063f33}.training-detail-kpi small{display:block;margin-top:3px;color:#6a7973;font-size:11px}
+.training-detail-card{background:#fff;border:1px solid #dce6e1;border-radius:9px;padding:12px;box-shadow:0 5px 14px rgba(18,55,43,.035)}.training-detail-card h3{margin:0 0 10px;font-size:14px}.training-detail-table-wrap{overflow:auto;max-height:390px}.training-detail-table{width:100%;border-collapse:collapse;font-size:12px}.training-detail-table th{position:sticky;top:0;background:#f3f7f5;text-align:left;padding:9px;border-bottom:1px solid #dce6e1;white-space:nowrap;z-index:1}.training-detail-table td{padding:8px 9px;border-bottom:1px solid #edf1ef;vertical-align:top}.training-detail-table tfoot td{font-weight:900;background:#f7faf8}.training-detail-empty{padding:30px;text-align:center;color:#6b7974}
+.training-detail-footer{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:10px;font-size:12px;color:#66756f}.training-detail-pages{display:flex;gap:5px}.training-detail-pages button{border:1px solid #d4dfda;background:#fff;border-radius:6px;min-width:32px;height:30px;cursor:pointer;color:#07583e}.training-detail-pages button.active{background:#087f49;color:#fff;border-color:#087f49}.training-detail-pages button:disabled{opacity:.4;cursor:not-allowed}
+body.training-detail-open{overflow:hidden}.kpi-grid .kpi,.province-card{cursor:pointer}.kpi-grid .kpi:hover,.province-card:hover{box-shadow:0 10px 26px rgba(7,106,66,.12);transform:translateY(-2px);transition:.15s ease}.dashboard-card-icon{width:42px;height:42px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:#e3f3e9;color:#087f49;font-size:22px;flex:0 0 42px;margin-bottom:8px}.dashboard-card-icon svg{width:24px;height:24px;fill:currentColor}.kpi.has-ui-icon{position:relative;padding-left:68px}.kpi.has-ui-icon .dashboard-card-icon{position:absolute;left:16px;top:18px}.kpi.has-ui-icon strong{font-size:34px}.kpi.has-ui-icon:after{content:"View details  →";display:block;margin-top:9px;color:#087f49;font-size:11px;font-weight:850}
+@media(max-width:900px){.training-detail-overlay{padding:10px}.training-detail-shell{width:98vw;max-height:92vh}.training-detail-filters{grid-template-columns:1fr 1fr}.training-detail-kpis{grid-template-columns:repeat(2,1fr)}.kpi.has-ui-icon{padding-left:56px}.kpi.has-ui-icon .dashboard-card-icon{left:10px}}
+@media print{body>*:not(.training-detail-overlay){display:none!important}.training-detail-overlay{position:static;background:#fff;padding:0}.training-detail-shell{width:100%;max-height:none;box-shadow:none;border:0}.training-detail-actions,.training-detail-filters,.training-detail-footer{display:none!important}.training-detail-body{overflow:visible}.training-detail-table-wrap{max-height:none;overflow:visible}}
 `;
 
-function ensureStyles(){
-  if(document.getElementById("training-interaction-styles")) return;
-  const style=document.createElement("style");
-  style.id="training-interaction-styles";
-  style.textContent=css;
-  document.head.appendChild(style);
-}
+const icons = {
+  "Total Trained": '<svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3 1.34 3 3 3ZM8 11c1.66 0 3-1.34 3-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3Zm8 2c-2 0-6 1-6 3v3h12v-3c0-2-4-3-6-3ZM8 13c-2.33 0-7 1.17-7 3.5V19h7v-3c0-.85.33-1.56.9-2.15A7.94 7.94 0 0 0 8 13Z"/></svg>',
+  "Experts Trained": '<svg viewBox="0 0 24 24"><path d="m12 3 10 5-10 5L2 8l10-5Zm-6 8.5 6 3 6-3V16c0 1.7-2.7 3-6 3s-6-1.3-6-3v-4.5Z"/></svg>',
+  "Superusers Trained": '<svg viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm0 2c-4 0-7 2-7 4.5V21h8.1a6.7 6.7 0 0 1-.1-1c0-2.1 1-4 2.6-5.2A9.8 9.8 0 0 0 12 14Zm7 1 1.2 2.4 2.8.4-2 2 .5 2.8L19 21.3l-2.5 1.3.5-2.8-2-2 2.8-.4L19 15Z"/></svg>',
+  "Users Trained": '<svg viewBox="0 0 24 24"><path d="M16 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm8 2c-2 0-6 1-6 3v3h12v-3c0-2-4-3-6-3ZM8 13c-2.3 0-7 1.2-7 3.5V19h7v-3c0-1 .4-2 1.2-2.7L8 13Z"/></svg>',
+  "Training Districts": '<svg viewBox="0 0 24 24"><path d="M3 21h18v-2H3v2Zm2-4h3v-7H5v7Zm5 0h4v-7h-4v7Zm6 0h3v-7h-3v7ZM12 2 2 7v2h20V7L12 2Z"/></svg>'
+};
 
-function activePageIsTrainings(){
-  const active=[...document.querySelectorAll(".side-menu button.active")][0];
-  return active && active.textContent.replace(/\s+/g," ").trim().endsWith("Trainings");
-}
-
-function currentFilter(label){
-  const cards=[...document.querySelectorAll(".filter-card")];
-  const card=cards.find(el=>el.querySelector("label")?.textContent.trim()===label);
-  return card?.querySelector("select")?.value || "All";
-}
-
-function csvEscape(value){
-  const s=String(value ?? "");
-  return /[",\n]/.test(s)?`"${s.replace(/"/g,'""')}"`:s;
-}
-function downloadCsv(title,rows){
-  if(!rows.length) return;
-  const headers=Object.keys(rows[0]);
-  const csv=[headers.map(csvEscape).join(","),...rows.map(r=>headers.map(h=>csvEscape(r[h])).join(","))].join("\n");
-  const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});
-  const a=document.createElement("a");
-  a.href=URL.createObjectURL(blob);a.download=`${title.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")}.csv`;a.click();URL.revokeObjectURL(a.href);
-}
-
-function roleRows(role){ return participants.filter(p=>!role || p.role===role); }
-function districtRows(rows){
-  const map=new Map();
-  rows.forEach(p=>{
-    const key=`${p.province||"Unknown"}|${p.district||"Unknown"}`;
-    if(!map.has(key)) map.set(key,{Province:p.province||"",District:p.district||"",Trained:0,Experts:0,Superusers:0,Users:0});
-    const r=map.get(key);r.Trained++;if(p.role==="Expert")r.Experts++;if(p.role==="Superuser")r.Superusers++;if(p.role==="User")r.Users++;
-  });
-  return [...map.values()].sort((a,b)=>a.Province.localeCompare(b.Province)||a.District.localeCompare(b.District));
-}
-function provinceSummary(rows){
-  const map=new Map();
-  rows.forEach(p=>{
-    const province=p.province||"Unknown";
-    if(!map.has(province))map.set(province,{Province:province,Experts:0,Superusers:0,Users:0,"Total Trained":0,"Districts Covered":new Set()});
-    const r=map.get(province);r["Total Trained"]++;if(p.role==="Expert")r.Experts++;if(p.role==="Superuser")r.Superusers++;if(p.role==="User")r.Users++;if(p.district)r["Districts Covered"].add(p.district);
-  });
-  return [...map.values()].map(r=>({...r,"Districts Covered":r["Districts Covered"].size})).sort((a,b)=>b["Total Trained"]-a["Total Trained"]);
-}
+function ensureStyles(){if(document.getElementById("training-interaction-styles"))return;const style=document.createElement("style");style.id="training-interaction-styles";style.textContent=css;document.head.appendChild(style);}
+function activePageIsTrainings(){const active=[...document.querySelectorAll(".side-menu button.active")][0];return active&&active.textContent.replace(/\s+/g," ").trim().endsWith("Trainings");}
+function csvEscape(value){const s=String(value??"");return /[",\n]/.test(s)?`"${s.replace(/"/g,'""')}"`:s;}
+function downloadCsv(title,rows){if(!rows.length)return;const headers=Object.keys(rows[0]);const csv=[headers.map(csvEscape).join(","),...rows.map(r=>headers.map(h=>csvEscape(r[h])).join(","))].join("\n");const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`${title.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")}.csv`;a.click();URL.revokeObjectURL(a.href);}
+function roleRows(role){return participants.filter(p=>!role||p.role===role);}
 function personExport(rows){return rows.map(p=>({Province:p.province||"",District:p.district||"",Facility:p.facility||"","First Name":p.firstName||"","Last Name":p.lastName||"",Profession:p.profession||"",Role:p.role||"",Phone:p.phone||""}));}
+function districtRows(rows){const map=new Map();rows.forEach(p=>{const key=`${p.province||"Unknown"}|${p.district||"Unknown"}`;if(!map.has(key))map.set(key,{Province:p.province||"",District:p.district||"",Trained:0,Experts:0,Superusers:0,Users:0});const r=map.get(key);r.Trained++;if(p.role==="Expert")r.Experts++;if(p.role==="Superuser")r.Superusers++;if(p.role==="User")r.Users++;});return [...map.values()].sort((a,b)=>a.Province.localeCompare(b.Province)||a.District.localeCompare(b.District));}
 
-function tableHtml(rows,totalLabel){
-  if(!rows.length)return '<div class="training-detail-empty">No records available for this selection.</div>';
-  const headers=Object.keys(rows[0]);
-  const head=headers.map(h=>`<th>${h}</th>`).join("");
-  const body=rows.map(r=>`<tr>${headers.map(h=>`<td>${r[h]??""}</td>`).join("")}</tr>`).join("");
-  return `<div class="training-detail-table-wrap"><table class="training-detail-table"><thead><tr>${head}</tr></thead><tbody>${body}</tbody>${totalLabel?`<tfoot><tr><td colspan="${headers.length}">${totalLabel}</td></tr></tfoot>`:""}</table></div>`;
-}
-function barHtml(rows){
-  const max=Math.max(...rows.map(r=>r["Total Trained"]||r.Trained||0),1);
-  return `<div class="training-detail-bars">${rows.slice(0,10).map(r=>{const v=r["Total Trained"]||r.Trained||0;const lab=r.Province||r.District;return `<div class="training-detail-bar"><i style="height:${Math.max(3,(v/max)*100)}%"></i><b>${v}</b><span>${lab}</span></div>`}).join("")}</div>`;
-}
-function donutHtml(experts,superusers,users){
-  const total=Math.max(experts+superusers+users,1);const a=experts/total*100,b=superusers/total*100;
-  const bg=`conic-gradient(#23669a 0 ${a}%,#52ae7b ${a}% ${a+b}%,#70c493 ${a+b}% 100%)`;
-  return `<div class="training-detail-donut-row"><div class="training-detail-donut" style="background:${bg}"></div><div class="training-detail-legend"><span><i class="training-detail-dot" style="background:#23669a"></i>Experts <b>${experts}</b></span><span><i class="training-detail-dot" style="background:#52ae7b"></i>Superusers <b>${superusers}</b></span><span><i class="training-detail-dot" style="background:#70c493"></i>Users <b>${users}</b></span></div></div>`;
+function options(values,label){return `<option value="All">All ${label}</option>${[...new Set(values.filter(Boolean))].sort().map(v=>`<option>${v}</option>`).join("")}`;}
+function tableHtml(rows){if(!rows.length)return '<div class="training-detail-empty">No records available for this selection.</div>';const headers=Object.keys(rows[0]);return `<div class="training-detail-table-wrap"><table class="training-detail-table"><thead><tr>${headers.map(h=>`<th>${h}</th>`).join("")}</tr></thead><tbody class="training-detail-tbody"></tbody></table></div><div class="training-detail-footer"><span class="training-detail-count"></span><div class="training-detail-pages"></div></div>`;}
+
+function decorateCards(){
+  document.querySelectorAll(".kpi-grid .kpi").forEach(card=>{
+    const label=card.querySelector(".kpi-label-row span")?.textContent.trim();if(!label||card.classList.contains("has-ui-icon"))return;
+    const icon=icons[label]||'<svg viewBox="0 0 24 24"><path d="M11 2h2v20h-2V2Zm9 9v2H4v-2h16Z"/></svg>';
+    const el=document.createElement("span");el.className="dashboard-card-icon";el.innerHTML=icon;card.prepend(el);card.classList.add("has-ui-icon");
+  });
 }
 
 function openTrainingDetail(kind,province){
-  ensureStyles();
-  let rows=participants;
-  let title="Total Trained — Details";
-  if(kind==="Experts Trained"){rows=roleRows("Expert");title="Experts Trained — Details";}
-  else if(kind==="Superusers Trained"){rows=roleRows("Superuser");title="Superusers Trained — Details";}
-  else if(kind==="Users Trained"){rows=roleRows("User");title="Users Trained — Details";}
-  else if(kind==="Training Districts"){title="Training Districts — Details";}
-  if(province){rows=participants.filter(p=>p.province===province);title=`${province} Province — Details`;}
-
-  const experts=rows.filter(p=>p.role==="Expert").length;
-  const superusers=rows.filter(p=>p.role==="Superuser").length;
-  const users=rows.filter(p=>p.role==="User").length;
-  const districts=new Set(rows.map(p=>p.district).filter(Boolean)).size;
-  const provinceRows=provinceSummary(rows);
-  const districtsData=districtRows(rows);
-  const exportRows=kind==="Training Districts"&&!province?districtsData:personExport(rows);
-
-  let reportingRate=null,reportsReceived=null,reportsExpected=null;
-  if(province){
-    const card=[...document.querySelectorAll(".province-card")].find(c=>c.querySelector("b")?.textContent.trim()===province);
-    if(card){
-      reportingRate=card.querySelector("strong")?.textContent.trim()||null;
-      const text=card.querySelector("small")?.textContent||"";const m=text.match(/([\d,]+)\s+of\s+([\d,]+)/i);if(m){reportsReceived=m[1];reportsExpected=m[2];}
-    }
-  }
-
-  const kpis=province?[
-    ["Trained",rows.length,"People trained"],["Reporting Rate",reportingRate||"—","Overall performance"],["Reports Received",reportsReceived||"—",reportsExpected?`Of ${reportsExpected} expected`:"Selected period"],["Districts Covered",districts,"Districts"]
-  ]:[
-    ["Total Trained",rows.length,"All categories"],["Experts Trained",experts,"eLMIS experts"],["Superusers Trained",superusers,"District superusers"],["Users Trained",users,"Facility users"]
-  ];
-
+  ensureStyles();let baseRows=participants;let title="Total Trained";
+  if(kind==="Experts Trained"){baseRows=roleRows("Expert");title="Experts Trained";}else if(kind==="Superusers Trained"){baseRows=roleRows("Superuser");title="Superusers Trained";}else if(kind==="Users Trained"){baseRows=roleRows("User");title="Users Trained";}else if(kind==="Training Districts"){title="Training Districts";}
+  if(province){baseRows=participants.filter(p=>p.province===province);title=`${province} Province`;}
+  const personMode=!(kind==="Training Districts"&&!province);const allExport=personMode?personExport(baseRows):districtRows(baseRows);
   const overlay=document.createElement("section");overlay.className="training-detail-overlay";
-  overlay.innerHTML=`<div class="training-detail-shell"><div class="training-detail-top"><div><button class="training-detail-back">← Back to Trainings</button><h1 class="training-detail-title">${title}</h1><p class="training-detail-sub">${province?"Training and reporting performance overview":"Detailed breakdown of training categories"}</p></div><div class="training-detail-actions"><button class="training-detail-export csv">⇩ Export CSV</button><button class="training-detail-export pdf">Export PDF</button></div></div><div class="training-detail-kpis">${kpis.map(k=>`<div class="training-detail-kpi"><span>${k[0]}</span><strong>${k[1]}</strong><small>${k[2]}</small></div>`).join("")}</div><div class="training-detail-grid"><div class="training-detail-card"><h3>${province?"Training by District":"Training by Province"}</h3>${barHtml(province?districtsData:provinceRows)}</div><div class="training-detail-card"><h3>Training by Category</h3>${donutHtml(experts,superusers,users)}</div></div><div class="training-detail-card"><h3>${province?"District Training Summary":"Training Summary by Province"}</h3>${tableHtml(province?districtsData:provinceRows)}</div><div class="training-detail-card" style="margin-top:14px"><h3>Training Personnel</h3>${tableHtml(personExport(rows))}</div></div>`;
+  overlay.innerHTML=`<div class="training-detail-shell"><div class="training-detail-head"><div><h1 class="training-detail-title">${title} — Details</h1><p class="training-detail-sub">${province?"Training and reporting performance overview":"Detailed records for this dashboard indicator"}</p></div><div class="training-detail-actions"><button class="training-detail-export csv">⇩ Export CSV</button><button class="training-detail-export pdf">▣ Export PDF</button><button class="training-detail-close" aria-label="Close">×</button></div></div><div class="training-detail-body"><div class="training-detail-filters"><div class="training-detail-filter"><label>Province</label><select class="f-province">${options(baseRows.map(r=>r.province),"Provinces")}</select></div><div class="training-detail-filter"><label>District</label><select class="f-district">${options(baseRows.map(r=>r.district),"Districts")}</select></div><div class="training-detail-filter"><label>Profession</label><select class="f-profession">${options(baseRows.map(r=>r.profession),"Professions")}</select></div><div class="training-detail-filter"><label>Search</label><input class="f-search" placeholder="Facility or name" /></div><button class="training-detail-reset">Reset</button></div><div class="training-detail-kpis"></div><div class="training-detail-card"><h3>${personMode?"Training Personnel":"Training District Summary"}</h3>${tableHtml(allExport)}</div></div></div>`;
   document.body.appendChild(overlay);document.body.classList.add("training-detail-open");
-  overlay.querySelector(".training-detail-back").onclick=()=>{overlay.remove();document.body.classList.remove("training-detail-open");};
-  overlay.querySelector(".csv").onclick=()=>downloadCsv(title,exportRows);
-  overlay.querySelector(".pdf").onclick=()=>window.print();
+  const provinceSelect=overlay.querySelector(".f-province"),districtSelect=overlay.querySelector(".f-district"),professionSelect=overlay.querySelector(".f-profession"),searchInput=overlay.querySelector(".f-search");let page=1;const pageSize=10;
+  function filteredPeople(){const q=searchInput.value.trim().toLowerCase();return baseRows.filter(r=>(provinceSelect.value==="All"||r.province===provinceSelect.value)&&(districtSelect.value==="All"||r.district===districtSelect.value)&&(professionSelect.value==="All"||r.profession===professionSelect.value)&&(!q||[r.facility,r.firstName,r.lastName,r.phone].some(v=>String(v||"").toLowerCase().includes(q))));}
+  function refreshDistricts(){const source=baseRows.filter(r=>provinceSelect.value==="All"||r.province===provinceSelect.value);districtSelect.innerHTML=options(source.map(r=>r.district),"Districts");}
+  function render(){const people=filteredPeople();const rows=personMode?personExport(people):districtRows(people);const experts=people.filter(p=>p.role==="Expert").length,superusers=people.filter(p=>p.role==="Superuser").length,users=people.filter(p=>p.role==="User").length,districts=new Set(people.map(p=>p.district).filter(Boolean)).size;overlay.querySelector(".training-detail-kpis").innerHTML=[["Total Trained",people.length],["Experts",experts],["Superusers",superusers],["Districts",districts]].map(k=>`<div class="training-detail-kpi"><span>${k[0]}</span><strong>${k[1]}</strong><small>Filtered selection</small></div>`).join("");const pages=Math.max(1,Math.ceil(rows.length/pageSize));page=Math.min(page,pages);const start=(page-1)*pageSize;const pageRows=rows.slice(start,start+pageSize);const tbody=overlay.querySelector(".training-detail-tbody");if(tbody)tbody.innerHTML=pageRows.map(r=>`<tr>${Object.keys(rows[0]||{}).map(h=>`<td>${r[h]??""}</td>`).join("")}</tr>`).join("");const count=overlay.querySelector(".training-detail-count");if(count)count.textContent=rows.length?`Showing ${start+1} to ${Math.min(start+pageSize,rows.length)} of ${rows.length} entries`:"0 entries";const pager=overlay.querySelector(".training-detail-pages");if(pager)pager.innerHTML=`<button class="pg-prev" ${page===1?"disabled":""}>‹</button>${Array.from({length:Math.min(pages,5)},(_,i)=>i+1).map(n=>`<button class="pg-num ${n===page?"active":""}" data-page="${n}">${n}</button>`).join("")}<button class="pg-next" ${page===pages?"disabled":""}>›</button>`;}
+  provinceSelect.onchange=()=>{refreshDistricts();page=1;render();};districtSelect.onchange=professionSelect.onchange=()=>{page=1;render();};searchInput.oninput=()=>{page=1;render();};overlay.querySelector(".training-detail-reset").onclick=()=>{provinceSelect.value="All";refreshDistricts();professionSelect.value="All";searchInput.value="";page=1;render();};overlay.addEventListener("click",e=>{const n=e.target.closest(".pg-num");if(n){page=Number(n.dataset.page);render();}if(e.target.closest(".pg-prev")&&page>1){page--;render();}if(e.target.closest(".pg-next")){page++;render();}});overlay.querySelector(".training-detail-close").onclick=()=>{overlay.remove();document.body.classList.remove("training-detail-open");};overlay.onclick=e=>{if(e.target===overlay){overlay.remove();document.body.classList.remove("training-detail-open");}};overlay.querySelector(".csv").onclick=()=>{const rows=personMode?personExport(filteredPeople()):districtRows(filteredPeople());downloadCsv(title,rows);};overlay.querySelector(".pdf").onclick=()=>window.print();render();
 }
 
-document.addEventListener("click",event=>{
-  if(!activePageIsTrainings())return;
-  const kpi=event.target.closest(".kpi-grid .kpi");
-  if(kpi){const label=kpi.querySelector(".kpi-label-row span")?.textContent.trim();if(["Total Trained","Experts Trained","Superusers Trained","Users Trained","Training Districts"].includes(label)){event.preventDefault();event.stopPropagation();openTrainingDetail(label);return;}}
-  const card=event.target.closest(".province-card");
-  if(card){const province=card.querySelector("b")?.textContent.trim();if(province){event.preventDefault();event.stopPropagation();openTrainingDetail("Province",province);}}
-},true);
+document.addEventListener("click",event=>{if(!activePageIsTrainings())return;const kpi=event.target.closest(".kpi-grid .kpi");if(kpi){const label=kpi.querySelector(".kpi-label-row span")?.textContent.trim();if(["Total Trained","Experts Trained","Superusers Trained","Users Trained","Training Districts"].includes(label)){event.preventDefault();event.stopPropagation();openTrainingDetail(label);return;}}const card=event.target.closest(".province-card");if(card){const province=card.querySelector("b")?.textContent.trim();if(province){event.preventDefault();event.stopPropagation();openTrainingDetail("Province",province);}}},true);
 
-ensureStyles();
+ensureStyles();decorateCards();new MutationObserver(()=>decorateCards()).observe(document.body,{childList:true,subtree:true});
