@@ -1,0 +1,81 @@
+/* Wide-screen layout refinement: reduce unused side whitespace while preserving responsiveness. */
+
+:root {
+  --dashboard-max: 1920px;
+}
+
+.brand-row {
+  width: 100%;
+  max-width: var(--dashboard-max);
+  padding-left: clamp(18px, 2.2vw, 34px);
+  padding-right: clamp(18px, 2.2vw, 34px);
+}
+
+.page-shell {
+  width: 100%;
+  max-width: var(--dashboard-max);
+  padding: 16px clamp(14px, 1.5vw, 24px) 30px;
+  grid-template-columns: 250px minmax(0, 1fr);
+  gap: 16px;
+}
+
+.content {
+  width: 100%;
+  min-width: 0;
+}
+
+/* Make major dashboard surfaces use the available canvas more effectively. */
+.kpi-grid,
+.page-filters,
+.insight-strip,
+.grid,
+.executive-grid,
+.training-grid,
+.task-grid,
+.map-trend-row {
+  width: 100%;
+}
+
+@media (min-width: 1500px) {
+  .page-shell {
+    grid-template-columns: 255px minmax(0, 1fr);
+  }
+
+  .kpi-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1921px) {
+  :root {
+    --dashboard-max: 100%;
+  }
+
+  .page-shell {
+    padding-left: 22px;
+    padding-right: 22px;
+  }
+
+  .brand-row {
+    padding-left: 28px;
+    padding-right: 28px;
+  }
+}
+
+@media (max-width: 1180px) {
+  .page-shell {
+    grid-template-columns: 220px minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .page-shell {
+    display: block;
+    padding: 12px;
+  }
+
+  .sidebar {
+    position: static;
+    margin-bottom: 12px;
+  }
+}
