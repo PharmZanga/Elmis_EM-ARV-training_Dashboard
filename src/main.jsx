@@ -51,16 +51,25 @@ function App() {
 }
 
 function DashboardApp() {
-  const periods = useMemo(() => sortPeriods(unique(reportingRows.map((row) => row.period))), []);
+  const reportingPeriods = useMemo(() => sortPeriods(unique(reportingRows.map((row) => row.period))), []);
+  const trainingPeriods = useMemo(() => getTrainingPeriods(participants), []);
   const programs = useMemo(() => unique(reportingRows.map((row) => row.program)).sort(), []);
   const provinces = useMemo(() => unique(reportingRows.map((row) => row.province)).sort(), []);
-  const defaultPeriod = periods.includes("February 2026") ? "February 2026" : periods.at(-1) || "February 2026";
+  const defaultPeriod = reportingPeriods.includes("February 2026") ? "February 2026" : reportingPeriods.at(-1) || "February 2026";
 
   const [activePage, setActivePage] = useState("executive");
   const [selectedPeriod, setSelectedPeriod] = useState(defaultPeriod);
   const [selectedProgram, setSelectedProgram] = useState("All");
   const [selectedProvince, setSelectedProvince] = useState("All");
   const [selectedDistrict, setSelectedDistrict] = useState("All");
+  const isTrainingPage = activePage === "training" || activePage === "trainings";
+  const periods = isTrainingPage ? trainingPeriods : reportingPeriods;
+
+  useEffect(() => {
+    if (!periods.includes(selectedPeriod)) {
+      setSelectedPeriod(periods.at(-1) || defaultPeriod);
+    }
+  }, [periods, selectedPeriod, defaultPeriod]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "auto" });
@@ -90,7 +99,7 @@ function DashboardApp() {
     return timelinessRows.filter((row) => matchesFilters(row, selectedPeriod, selectedProgram, selectedProvince, selectedDistrict));
   }, [selectedPeriod, selectedProgram, selectedProvince, selectedDistrict]);
 
-  const filteredParticipants = useMemo(() => {
+  const scopedParticipants = useMemo(() => {
     return participants.filter((person) => {
       return (
         (selectedProvince === "All" || person.province === selectedProvince) &&
@@ -98,6 +107,19 @@ function DashboardApp() {
       );
     });
   }, [selectedProvince, selectedDistrict]);
+
+  const filteredParticipants = useMemo(() => {
+    const cutoff = getPeriodEnd(selectedPeriod);
+    return scopedParticipants.filter((person) => {
+      const trainingDate = parseTrainingDate(person.startDate);
+      return trainingDate && trainingDate <= cutoff;
+    });
+  }, [scopedParticipants, selectedPeriod]);
+
+  const undatedParticipants = useMemo(
+    () => scopedParticipants.filter((person) => !parseTrainingDate(person.startDate)),
+    [scopedParticipants]
+  );
 
   const facilitySemantics = useMemo(() => getFacilityReportingSemantics(filteredReporting), [filteredReporting]);
   const totals = useMemo(() => ({
@@ -151,7 +173,7 @@ function DashboardApp() {
           <PageTicker activePage={activePage} totals={totals} participants={filteredParticipants} followUps={followUps} period={selectedPeriod} province={selectedProvince} />
           {!["helpdesk", "updates"].includes(activePage) && <>
             <div className="page-filters" aria-label="Dashboard filters">
-              <FilterGroup title="Period" items={periods} selected={selectedPeriod} onSelect={setSelectedPeriod} />
+              <FilterGroup title={isTrainingPage ? "Training through" : "Period"} items={periods} selected={selectedPeriod} onSelect={setSelectedPeriod} />
               <FilterGroup title="Program" items={["All", ...programs]} selected={selectedProgram} onSelect={setSelectedProgram} />
               <FilterGroup
                 title="Province"
@@ -170,6 +192,12 @@ function DashboardApp() {
               <span>{selectedProvince === "All" ? "National" : selectedProvince}</span>
               <span>{selectedDistrict === "All" ? "All Districts" : selectedDistrict}</span>
             </div>
+            {isTrainingPage && (
+              <div className="training-date-note" role="status">
+                <strong>Cumulative through {selectedPeriod}: {filteredParticipants.length.toLocaleString()} trained</strong>
+                <span>{undatedParticipants.length.toLocaleString()} record{undatedParticipants.length === 1 ? "" : "s"} excluded because the training date is blank or invalid.</span>
+              </div>
+            )}
           </>}
           {activePage === "executive" && <ExecutivePage totals={totals} statusRows={statusRows} participants={filteredParticipants} districtBars={districtBars} provinceTicker={provinceTicker} followUps={followUps} provinceCards={provinceCards} monthlyTrends={monthlyTrends} insights={insights} priorityRows={priorityRows} />}
           {activePage === "reports" && <KpiPage totals={totals} statusRows={statusRows} districtBars={districtBars} submissionTrend={submissionTrend} provinceTicker={provinceTicker} provinceCards={provinceCards} monthlyTrends={monthlyTrends} insights={insights} />}
@@ -1608,6 +1636,49 @@ function countBy(rows, key) {
     counts[value] = (counts[value] || 0) + 1;
     return counts;
   }, {});
+}
+
+function parseTrainingDate(value) {
+  const match = String(value || "").trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return null;
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  if (year < 2000 || year > 2100) return null;
+
+  const date = new Date(Date.UTC(year, month - 1, day));
+  if (
+    date.getUTCFullYear() !== year ||
+    date.getUTCMonth() !== month - 1 ||
+    date.getUTCDate() !== day
+  ) return null;
+
+  return date;
+}
+
+function getPeriodEnd(period) {
+  const date = new Date(`1 ${period}`);
+  if (Number.isNaN(date.getTime())) return new Date(8640000000000000);
+  return new Date(Date.UTC(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59, 999));
+}
+
+function getTrainingPeriods(rows) {
+  const dates = rows.map((row) => parseTrainingDate(row.startDate)).filter(Boolean).sort((a, b) => a - b);
+  if (!dates.length) return [];
+
+  const periods = [];
+  const cursor = new Date(Date.UTC(dates[0].getUTCFullYear(), dates[0].getUTCMonth(), 1));
+  const last = dates.at(-1);
+  const end = new Date(Date.UTC(last.getUTCFullYear(), last.getUTCMonth(), 1));
+  const formatter = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric", timeZone: "UTC" });
+
+  while (cursor <= end) {
+    periods.push(formatter.format(cursor));
+    cursor.setUTCMonth(cursor.getUTCMonth() + 1);
+  }
+
+  return periods;
 }
 
 function sortPeriods(values) {
