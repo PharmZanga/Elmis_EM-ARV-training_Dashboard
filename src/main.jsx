@@ -988,9 +988,9 @@ function TrainingPage({ totals, participants, facilityKpis }) {
   return (
     <>
       <KpiGrid items={[
-        { label: "Issues Resolved", value: totals.issuesResolved, title: "Resolved Training and Support Issues", rows: facilityTraining.filter((row) => Number(row.reportingRate) >= 100), columns: ["district", "facility", "trained", "reportingRate", "timeliness"] },
-        { label: "Superusers Trained", value: totals.superusers, title: "Superusers Trained", rows: superusers, columns: ["province", "district", "facility", "firstName", "lastName", "profession", "phone"] },
+        { label: "Total Trained", value: participants.length, title: "Total Trained", rows: participants, columns: ["province", "district", "facility", "firstName", "lastName", "profession", "role", "phone"] },
         { label: "Experts Trained", value: totals.experts, title: "Experts Trained", rows: experts, columns: ["province", "district", "facility", "firstName", "lastName", "profession", "phone"] },
+        { label: "Superusers Trained", value: totals.superusers, title: "Superusers Trained", rows: superusers, columns: ["province", "district", "facility", "firstName", "lastName", "profession", "phone"] },
         { label: "Users Trained", value: totals.users, title: "Users Trained", rows: users, columns: ["province", "district", "facility", "firstName", "lastName", "profession", "phone"] },
         { label: "Training Districts", value: totals.trainingDistricts, title: "Training District Coverage", rows: unique(participants.map((p) => `${p.province}|${p.district}`)).map((key) => { const [province, district] = key.split("|"); return { province, district, trained: participants.filter((p) => p.province === province && p.district === district).length }; }), columns: ["province", "district", "trained"] },
       ]} />
