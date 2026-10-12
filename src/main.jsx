@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { dashboardData } from "./dashboardData.js";
+import { linkTrainingToFacilities } from "./trainingLinkages.js";
 import "./styles.css";
 
 const { participants, reportingRows, timelinessRows, facilityMetadata = [] } = dashboardData;
@@ -1579,18 +1580,6 @@ function reportSubmissionTrend(rows) {
     counts[row.dateReceived] = (counts[row.dateReceived] || 0) + 1;
   });
   return Object.entries(counts).sort(([a], [b]) => a.localeCompare(b)).slice(-14).map(([label, value]) => ({ label: label.slice(5), value }));
-}
-
-function linkTrainingToFacilities(facilityKpis, traineeRows) {
-  const byDistrict = countBy(traineeRows, "district");
-  const byFacility = countBy(traineeRows, "facility");
-  return facilityKpis.slice(0, 500).map((facility) => ({
-    district: facility.district,
-    facility: facility.facility,
-    trained: (byFacility[facility.facility] || 0) + (byDistrict[facility.district] || 0),
-    reportingRate: facility.reportingRate,
-    timeliness: facility.timeliness,
-  })).sort((a, b) => b.trained - a.trained);
 }
 
 function getTotals(reportRows, timelyRows, traineeRows) {
