@@ -2,9 +2,10 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { dashboardData } from "./dashboardData.js";
 import { linkTrainingToFacilities } from "./trainingLinkages.js";
+import { percent, count, reportingMetrics, groupedReportingMetrics } from "./reportingMetrics.js";
 import "./styles.css";
 
-const { participants, reportingRows, timelinessRows, facilityMetadata = [] } = dashboardData;
+const { participants, reportingRows, timelinessRows, facilityMetadata = [], reportingUpdate = {} } = dashboardData;
 const menuItems = [
   ["executive", "1", "Executive"],
   ["reports", "2", "eLMIS Reports"],
@@ -56,7 +57,7 @@ function DashboardApp() {
   const trainingPeriods = useMemo(() => getTrainingPeriods(participants), []);
   const programs = useMemo(() => unique(reportingRows.map((row) => row.program)).sort(), []);
   const provinces = useMemo(() => unique(reportingRows.map((row) => row.province)).sort(), []);
-  const defaultPeriod = reportingPeriods.includes("February 2026") ? "February 2026" : reportingPeriods.at(-1) || "February 2026";
+  const defaultPeriod = reportingPeriods.at(-1) || "February 2026";
 
   const [activePage, setActivePage] = useState("executive");
   const [selectedPeriod, setSelectedPeriod] = useState(defaultPeriod);
@@ -122,15 +123,25 @@ function DashboardApp() {
     [scopedParticipants]
   );
 
-  const facilitySemantics = useMemo(() => getFacilityReportingSemantics(filteredReporting), [filteredReporting]);
+  const partialReporting = (reportingUpdate.partialReportingPeriods || []).includes(selectedPeriod);
+  const facilitySemantics = useMemo(() => {
+    const values = getFacilityReportingSemantics(filteredReporting);
+    return partialReporting ? { ...values, facilitiesExpected: null, facilitiesReported: null } : values;
+  }, [filteredReporting, partialReporting]);
   const totals = useMemo(() => ({
     ...getTotals(filteredReporting, filteredTimeliness, filteredParticipants),
+    ...reportingMetrics(filteredReporting, filteredTimeliness, partialReporting),
+    reportingDetails: partialReporting ? filteredTimeliness.map((row) => ({ ...row, reported: row.reportedOnTime + row.reportedLate, reportingRate: row.expected ? (row.reportedOnTime + row.reportedLate) / row.expected * 100 : null })) : filteredReporting.map((row) => ({ ...row, reportingRate: isReporting(row) ? 100 : 0 })),
     ...facilitySemantics,
-  }), [filteredReporting, filteredTimeliness, filteredParticipants, facilitySemantics]);
+  }), [filteredReporting, filteredTimeliness, filteredParticipants, facilitySemantics, partialReporting]);
   const statusRows = useMemo(() => facilityRows(filteredReporting, filteredTimeliness), [filteredReporting, filteredTimeliness]);
-  const districtBars = useMemo(() => districtPerformance(filteredReporting), [filteredReporting]);
+  const districtBars = useMemo(() => partialReporting
+    ? groupedReportingMetrics(filteredReporting, filteredTimeliness, "district", true).filter((r) => Number.isFinite(r.reportingRate)).map((r) => ({ label: r.district, value: r.reportingRate })).sort((a, b) => b.value - a.value)
+    : districtPerformance(filteredReporting), [filteredReporting, filteredTimeliness, partialReporting]);
   const submissionTrend = useMemo(() => reportSubmissionTrend(filteredReporting), [filteredReporting]);
-  const provinceTicker = useMemo(() => provincePerformance(filteredReporting), [filteredReporting]);
+  const provinceTicker = useMemo(() => partialReporting
+    ? groupedReportingMetrics(filteredReporting, filteredTimeliness, "province", true)
+    : provincePerformance(filteredReporting), [filteredReporting, filteredTimeliness, partialReporting]);
   const followUps = useMemo(() => taskFollowUps(statusRows, filteredTimeliness), [statusRows, filteredTimeliness]);
   const provinceCards = useMemo(() => provinceTrainingPerformance(provinceTicker, filteredParticipants), [provinceTicker, filteredParticipants]);
   const monthlyTrends = useMemo(() => monthlyProgramTrends(reportingRows, selectedProvince, selectedDistrict), [selectedProvince, selectedDistrict]);
@@ -193,6 +204,13 @@ function DashboardApp() {
               <span>{selectedProvince === "All" ? "National" : selectedProvince}</span>
               <span>{selectedDistrict === "All" ? "All Districts" : selectedDistrict}</span>
             </div>
+            {!isTrainingPage && partialReporting && (
+              <div className="training-date-note" role="status">
+                <strong>Named non-reporting facilities are available for {selectedPeriod}.</strong>
+                <span>{filteredTimeliness.length ? "Reporting rates use district report totals. The full list of reporting facilities is unavailable, so Facilities Reported is N/A." : "Full reporting rosters and timeliness totals were not supplied for this month. Rates are N/A."}</span>
+                {selectedPeriod === "September 2026" && <span>The national EM district totals imply 506 missing reports; the supplied list names 480. These source figures are kept separate.</span>}
+              </div>
+            )}
             {isTrainingPage && (
               <div className="training-date-note" role="status">
                 <strong>Cumulative through {selectedPeriod}: {filteredParticipants.length.toLocaleString()} trained</strong>
@@ -318,11 +336,11 @@ function ExecutivePage({ totals, statusRows, participants, districtBars, provinc
   return (
     <>
       <KpiGrid items={[
-        { label: "Reporting Rate", value: `${totals.reportingRate.toFixed(1)}%`, title: "Reporting Rate Details", rows: statusRows, columns: ["province", "district", "facility", "program", "status", "reportingRate"] },
-        { label: "Timeliness", value: `${totals.timeliness.toFixed(1)}%`, title: "Reporting Timeliness Details", rows: statusRows, columns: ["province", "district", "facility", "program", "timeliness", "status"] },
+        { label: "Reporting Rate", value: percent(totals.reportingRate), title: "Reporting Rate Details", rows: totals.reportingDetails, columns: ["province", "district", "facility", "program", "expected", "reported", "status", "reportingRate"] },
+        { label: "Timeliness", value: percent(totals.timeliness), title: "Reporting Timeliness Details", rows: totals.timelinessDetails, columns: ["province", "district", "program", "expected", "reportedOnTime", "reportedLate", "timeliness"] },
         { label: "Trained eLMIS Personnel", value: participants.length, title: "Trained eLMIS Personnel", rows: participants, columns: ["province", "district", "facility", "firstName", "lastName", "profession", "role"] },
         { label: "Non-Reporting Facilities", value: totals.nonReportingFacilities, title: "Non-Reporting Facilities", rows: statusRows.filter((row) => row.status === "NON_REPORTING"), columns: ["province", "district", "facility", "program", "status"] },
-        { label: "Late Follow-ups", value: followUps.lateDistricts.length, title: "Late Reporting Follow-ups", rows: followUps.lateDistricts, columns: ["province", "district", "program", "reportedLate", "timeliness", "task"] },
+        { label: "Late Follow-ups", value: totals.timelinessDetails.length ? followUps.lateDistricts.length : "N/A", title: "Late Reporting Follow-ups", rows: followUps.lateDistricts, columns: ["province", "district", "program", "reportedLate", "timeliness", "task"] },
       ]} />
       <InsightStrip insights={insights} />
 
@@ -376,7 +394,7 @@ function ExecutivePage({ totals, statusRows, participants, districtBars, provinc
 function KpiPage({ totals, statusRows, districtBars, submissionTrend, provinceTicker, provinceCards, monthlyTrends, insights }) {
   const facilityStatusRows = uniqueFacilityStatusRows(statusRows);
   const reportedRows = facilityStatusRows.filter((row) => row.status === "REPORTING");
-  const nonReportingRows = facilityStatusRows.filter((row) => row.status === "NON_REPORTING");
+  const nonReportingRows = statusRows.filter((row) => row.status === "NON_REPORTING");
   const districtRows = districtBars.map((row) => ({
     district: row.label,
     reportingRate: row.value,
@@ -384,14 +402,14 @@ function KpiPage({ totals, statusRows, districtBars, submissionTrend, provinceTi
   const reportCards = [
     {
       label: "Reporting Rate",
-      value: `${totals.reportingRate.toFixed(1)}%`,
+      value: percent(totals.reportingRate),
       title: "Reporting Rate Full Details",
-      rows: statusRows,
-      columns: ["province", "district", "facility", "program", "status", "reportingRate"],
+      rows: totals.reportingDetails,
+      columns: ["province", "district", "facility", "program", "expected", "reported", "status", "reportingRate"],
     },
     {
       label: "Facilities Reported",
-      value: totals.facilitiesReported,
+      value: count(totals.facilitiesReported),
       title: "Unique Facilities Reported Full Details",
       rows: reportedRows,
       columns: ["province", "district", "facility", "program", "status", "dateReceived"],
@@ -405,13 +423,13 @@ function KpiPage({ totals, statusRows, districtBars, submissionTrend, provinceTi
     },
     {
       label: "Timeliness",
-      value: `${totals.timeliness.toFixed(1)}%`,
+      value: percent(totals.timeliness),
       title: "Reporting Timeliness Full Details",
-      rows: statusRows,
-      columns: ["province", "district", "facility", "program", "timeliness", "status"],
+      rows: totals.timelinessDetails,
+      columns: ["province", "district", "program", "expected", "reportedOnTime", "reportedLate", "timeliness"],
     },
     {
-      label: "Districts",
+      label: totals.reportingRate === null ? "Affected Districts" : "Districts",
       value: totals.districts,
       title: "District Reporting Rate Details",
       rows: districtRows,
@@ -424,8 +442,8 @@ function KpiPage({ totals, statusRows, districtBars, submissionTrend, provinceTi
       <KpiGrid items={reportCards} />
       <InsightStrip insights={insights} />
       <section className="grid three">
-        <Panel title="Reporting Rate by Facility" detailRows={statusRows} detailColumns={["province", "district", "facility", "program", "reportingRate", "status"]}><DataTable rows={statusRows} columns={["district", "facility", "program", "reportingRate"]} total={`${totals.reportingRate.toFixed(1)}%`} /></Panel>
-        <Panel title="Reporting Timeliness" detailRows={statusRows} detailColumns={["province", "district", "facility", "program", "timeliness", "status"]}><DataTable rows={statusRows} columns={["district", "program", "timeliness", "status"]} total={`${totals.timeliness.toFixed(1)}%`} /></Panel>
+        <Panel title={statusRows.some((row) => row.nonReportingOnly) ? "Named Non-Reporting Facilities" : "Reporting Rate by Facility"} detailRows={statusRows} detailColumns={["province", "district", "facility", "program", "reportingRate", "status"]}><DataTable rows={statusRows} columns={["district", "facility", "program", "reportingRate"]} total={percent(totals.reportingRate)} /></Panel>
+        <Panel title="Reporting Timeliness" detailRows={totals.timelinessDetails} detailColumns={["province", "district", "program", "expected", "reportedOnTime", "reportedLate", "timeliness"]}><DataTable rows={totals.timelinessDetails} columns={["district", "program", "expected", "reportedOnTime", "reportedLate", "timeliness"]} total={percent(totals.timeliness)} /></Panel>
         <Panel title="Reporting Status" detailRows={statusRows} detailColumns={["province", "district", "facility", "status"]}><DataTable rows={statusRows} columns={["province", "district", "facility", "status"]} /></Panel>
         <Panel title="Facility Reporting vs Non-Reporting" detailRows={statusRows} detailColumns={["province", "district", "facility", "status"]}><Pie reporting={totals.facilitiesReported} nonReporting={totals.nonReportingFacilities} /></Panel>
         <Panel title="Report Submission Distribution" detailRows={submissionTrend} detailColumns={["label", "value"]}><LineChart values={submissionTrend} /></Panel>
@@ -444,10 +462,10 @@ function TaskPage({ totals, statusRows, followUps, provinceTicker, priorityRows,
     <>
       <KpiGrid items={[
         ["Open Follow-ups", followUps.nonReporting.length + followUps.lateDistricts.length],
-        ["Non-Reporting Facilities", followUps.nonReporting.length],
-        ["Late Districts", followUps.lateDistricts.length],
-        ["Late Reports", followUps.lateReports],
-        ["Reporting Rate", `${totals.reportingRate.toFixed(1)}%`],
+        ["Non-Reporting Facilities", totals.nonReportingFacilities],
+        ["Late Districts", totals.timelinessDetails.length ? followUps.lateDistricts.length : "N/A"],
+        ["Late Reports", totals.timelinessDetails.length ? followUps.lateReports : "N/A"],
+        ["Reporting Rate", percent(totals.reportingRate)],
       ]} />
       <InsightStrip insights={insights} />
       <ProvinceTicker values={provinceTicker} />
@@ -1044,7 +1062,7 @@ function KpiGrid({ items }) {
     <section className="kpi-grid">
       {items.map((item) => {
         const card = Array.isArray(item) ? { label: item[0], value: item[1] } : item;
-        const clickable = card.rows && card.columns;
+        const clickable = card.rows && card.columns && card.value !== "N/A";
         return (
           <button
             type="button"
@@ -1086,8 +1104,8 @@ function FilterGroup({ title, items, selected, onSelect }) {
 function PageTicker({ activePage, totals, participants, followUps, period, province }) {
   const scope = province === "All" ? "National" : province;
   const messages = {
-    executive: `${period} | ${scope} reporting ${totals.reportingRate.toFixed(1)}% | Timeliness ${totals.timeliness.toFixed(1)}% | ${totals.nonReportingFacilities ?? totals.nonReporting} non-reporting facilities | ${participants.length} trained eLMIS personnel`,
-    reports: `${period} | ${scope} reporting ${totals.reportingRate.toFixed(1)}% | ${totals.facilitiesReported ?? totals.reporting} facilities reported | ${totals.nonReportingFacilities ?? totals.nonReporting} non-reporting facilities | ${totals.districts} districts`,
+    executive: `${period} | ${scope} reporting ${percent(totals.reportingRate)} | Timeliness ${percent(totals.timeliness)} | ${totals.nonReportingFacilities ?? totals.nonReporting} non-reporting facilities | ${participants.length} trained eLMIS personnel`,
+    reports: `${period} | ${scope} reporting ${percent(totals.reportingRate)} | ${count(totals.facilitiesReported)} facilities reported | ${totals.nonReportingFacilities ?? totals.nonReporting} non-reporting facilities | ${totals.districts} districts`,
     training: `${participants.length} trained eLMIS personnel | ${totals.experts} experts | ${totals.superusers} superusers | ${totals.users} users`,
     tasks: `${totals.nonReportingFacilities ?? totals.nonReporting} facilities require reporting follow-up | ${followUps.lateDistricts.length} late-reporting follow-ups`,
     trainings: `${participants.length} trained eLMIS personnel | ${totals.trainingDistricts} training districts | ${totals.experts} experts | ${totals.superusers} superusers`,
@@ -1100,7 +1118,7 @@ function PageTicker({ activePage, totals, participants, followUps, period, provi
 
 function ProvinceTicker({ values }) {
   const items = values.length ? values : [{ province: "No province data", reportingRate: 0, reporting: 0, expected: 0 }];
-  const tickerText = items.map((item) => `${item.province}: ${item.reportingRate.toFixed(1)}% reporting (${item.reporting.toLocaleString()}/${item.expected.toLocaleString()})`).join("   |   ");
+  const tickerText = items.map((item) => `${item.province}: ${percent(item.reportingRate)} reporting (${count(item.reporting)}/${count(item.expected)})`).join("   |   ");
   return (
     <div className="ticker" aria-label="Province reporting ticker">
       <div className="ticker-track">
@@ -1171,8 +1189,8 @@ function ProvincePerformanceCards({ values }) {
             <b>{item.province}</b>
             <span>{item.training.toLocaleString()} trained</span>
           </div>
-          <strong>{item.reportingRate.toFixed(1)}%</strong>
-          <small>{item.reporting.toLocaleString()} of {item.expected.toLocaleString()} reports received</small>
+          <strong>{percent(item.reportingRate)}</strong>
+          <small>{count(item.reporting)} of {count(item.expected)} reports received</small>
           <div className="mini-meter"><i style={{ width: `${Math.min(item.reportingRate, 100)}%` }} /></div>
         </article>
       ))}
@@ -1192,7 +1210,7 @@ function ProvincePerformanceMap({ values }) {
         const google = window.google;
         const data = google.visualization.arrayToDataTable([
           ["Province", "Reporting Rate"],
-          ...values.map((item) => [googleProvinceName(item.province), Number(item.reportingRate.toFixed(1))]),
+          ...values.map((item) => [googleProvinceName(item.province), Number.isFinite(item.reportingRate) ? Number(item.reportingRate.toFixed(1)) : null]),
         ]);
         const chart = new google.visualization.GeoChart(mapRef.current);
         chart.draw(data, {
@@ -1243,7 +1261,7 @@ function ProvinceMapLabels({ values }) {
       {values.map((item) => (
         <span key={item.province}>
           <b>{item.province}</b>
-          <em>{item.reportingRate.toFixed(1)}%</em>
+          <em>{percent(item.reportingRate)}</em>
         </span>
       ))}
     </div>
@@ -1336,6 +1354,7 @@ function PeopleTable({ rows }) {
 }
 
 function Pie({ reporting, nonReporting }) {
+  if (!Number.isFinite(reporting) || !Number.isFinite(nonReporting)) return <div className="empty-state">The supplied files do not identify every reporting facility for this month. Named non-reporting facilities: {count(nonReporting)}.</div>;
   const total = reporting + nonReporting;
   const reportingPercent = total ? (reporting / total) * 100 : 0;
   return (
@@ -1368,11 +1387,20 @@ function MonthlyTrendChart({ values }) {
     { key: "Essential Medicine", label: "EM", color: "#147a46" },
     { key: "Antiretroviral Drugs", label: "ARV", color: "#195e8f" },
   ];
-  const toPoints = (key) => values.map((item, index) => {
-    const x = (index / Math.max(values.length - 1, 1)) * 100;
-    const y = 94 - ((item[key] || 0) / 100) * 84;
-    return `${x},${y}`;
-  }).join(" ");
+  const toSegments = (key) => {
+    const segments = [];
+    let points = [];
+    values.forEach((item, index) => {
+      if (!Number.isFinite(item[key])) {
+        if (points.length) segments.push(points.join(" "));
+        points = [];
+        return;
+      }
+      points.push(`${(index / Math.max(values.length - 1, 1)) * 100},${94 - item[key] / 100 * 84}`);
+    });
+    if (points.length) segments.push(points.join(" "));
+    return segments;
+  };
 
   return (
     <div className="trend-wrap">
@@ -1380,9 +1408,11 @@ function MonthlyTrendChart({ values }) {
         {series.map((item) => <span key={item.key}><i style={{ background: item.color }} />{item.label}</span>)}
       </div>
       <svg className="trend-chart" viewBox="0 0 100 100" preserveAspectRatio="none">
-        {series.map((item) => <polyline key={item.key} points={toPoints(item.key)} style={{ stroke: item.color }} />)}
+        {series.flatMap((item) => toSegments(item.key).map((points, index) => <polyline key={`${item.key}-${index}`} points={points} style={{ stroke: item.color }} />))}
+        {series.flatMap((item) => values.map((value, index) => Number.isFinite(value[item.key]) && <circle key={`${item.key}-${index}`} cx={(index / Math.max(values.length - 1, 1)) * 100} cy={94 - value[item.key] / 100 * 84} r="0.8" fill={item.color}><title>{value.label}: {item.label} {percent(value[item.key])}</title></circle>))}
       </svg>
       <div className="chart-axis">{values.map((item) => <span key={item.label}>{item.label}</span>)}</div>
+      {values.some((row) => series.some((item) => row[item.key] === null)) && <p className="table-note">Gaps indicate months without full reporting totals.</p>}
     </div>
   );
 }
@@ -1464,18 +1494,23 @@ function monthlyProgramTrends(rows, province, district) {
     (district === "All" || row.district === district) &&
     programs.includes(row.program)
   ));
-  return sortPeriods(unique(scopedRows.map((row) => row.period))).map((period) => {
-    const record = { label: period.replace(" 2026", "").replace(" 2025", "") };
+  const periods = sortPeriods(unique(scopedRows.map((row) => row.period)));
+  const latestYear = periods.at(-1)?.split(" ")[1];
+  return periods.filter((period) => period.endsWith(` ${latestYear}`)).map((period) => {
+    const record = { label: `${period.split(" ")[0].slice(0, 3)} ${period.split(" ")[1]}` };
     programs.forEach((program) => {
       const items = scopedRows.filter((row) => row.period === period && row.program === program);
-      const reporting = items.filter((row) => isReporting(row)).length;
-      record[program] = items.length ? (reporting / items.length) * 100 : 0;
+      const timely = timelinessRows.filter((row) => row.period === period && row.program === program && (province === "All" || row.province === province) && (district === "All" || row.district === district));
+      record[program] = reportingMetrics(items, timely, (reportingUpdate.partialReportingPeriods || []).includes(period)).reportingRate;
     });
     return record;
   });
 }
 
 function buildInsights(provinceStats, statusRows, traineeRows) {
+  if (statusRows.some((row) => row.nonReportingOnly)) {
+    return [{ label: "Reporting coverage", tone: "info", text: "Follow-ups use the supplied named non-reporting facilities. Reporting rates use district totals where available." }];
+  }
   if (!provinceStats.length) return [];
   const lowest = [...provinceStats].sort((a, b) => a.reportingRate - b.reportingRate)[0];
   const arvProvince = provincePerformance(statusRows.filter((row) => row.program === "Antiretroviral Drugs")).sort((a, b) => a.reportingRate - b.reportingRate)[0] || lowest;
@@ -1503,7 +1538,7 @@ function buildInsights(provinceStats, statusRows, traineeRows) {
 function priorityActions(followUps, provinceStats, traineeRows) {
   const dueSoon = addDays(new Date(), 7);
   const dueLater = addDays(new Date(), 14);
-  const lowestProvince = [...provinceStats].sort((a, b) => a.reportingRate - b.reportingRate)[0];
+  const lowestProvince = provinceStats.filter((p) => Number.isFinite(p.reportingRate)).sort((a, b) => a.reportingRate - b.reportingRate)[0];
   const trainingByProvince = countBy(traineeRows, "province");
   const lowestTraining = [...provinceStats].sort((a, b) => (trainingByProvince[a.province] || 0) - (trainingByProvince[b.province] || 0))[0];
   const firstNonReporting = followUps.nonReporting[0];
@@ -1589,14 +1624,15 @@ function getTotals(reportRows, timelyRows, traineeRows) {
   const timelyOnTime = timelyRows.reduce((sum, row) => sum + row.reportedOnTime, 0);
   return {
     reportingRate: expected ? (reporting / expected) * 100 : 0,
-    timeliness: timelyExpected ? (timelyOnTime / timelyExpected) * 100 : 0,
+    timeliness: timelyExpected ? (timelyOnTime / timelyExpected) * 100 : null,
+    timelinessDetails: timelyRows,
     reporting,
     nonReporting: expected - reporting,
     expected,
     superusers: traineeRows.filter((person) => person.role === "Superuser").length,
     experts: traineeRows.filter((person) => person.role === "Expert").length,
     users: traineeRows.filter((person) => person.role === "User").length,
-    districts: unique(reportRows.map((row) => row.district)).length,
+    districts: unique([...reportRows, ...timelyRows].map((row) => `${row.province}|${row.district}`)).length,
     trainingDistricts: unique(traineeRows.map((row) => row.district)).length,
     issuesResolved: traineeRows.reduce((sum, row) => sum + Number(row.issuesResolved || 0), 0),
   };
@@ -1679,6 +1715,7 @@ function labelize(value) {
 }
 
 function formatCell(value, column) {
+  if (value === null) return "N/A";
   if (["reportingRate", "timeliness"].includes(column) && typeof value === "number") return `${value.toFixed(1)}%`;
   if (typeof value === "number") return value.toLocaleString();
   return value || "";

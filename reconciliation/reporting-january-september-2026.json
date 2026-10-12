@@ -1,0 +1,2139 @@
+{
+  "sources": [
+    {
+      "file": "January to September 2026 Non Reporting Facilities.xls",
+      "sha256": "5088b7462e97842021a1ccf1a8f6aa2f58f486dfc01b13650d8c49e6963f9276"
+    },
+    {
+      "file": "September 2026 Timeliness Reporting, Zambia.xls",
+      "sha256": "915af318f6eb625f33681ee3c995c212815ba82b6e8c5ebd95451bd322b5f85a"
+    }
+  ],
+  "programs": [
+    "Antiretroviral Drugs",
+    "Essential Medicine"
+  ],
+  "nonReportingCounts": {
+    "September 2026|Antiretroviral Drugs": 251,
+    "April 2026|Antiretroviral Drugs": 47,
+    "August 2026|Antiretroviral Drugs": 52,
+    "February 2026|Antiretroviral Drugs": 59,
+    "January 2026|Antiretroviral Drugs": 49,
+    "July 2026|Antiretroviral Drugs": 40,
+    "June 2026|Antiretroviral Drugs": 34,
+    "March 2026|Antiretroviral Drugs": 46,
+    "May 2026|Antiretroviral Drugs": 48,
+    "September 2026|Essential Medicine": 480,
+    "July 2026|Essential Medicine": 54,
+    "April 2026|Essential Medicine": 55,
+    "February 2026|Essential Medicine": 85,
+    "January 2026|Essential Medicine": 70,
+    "June 2026|Essential Medicine": 44,
+    "March 2026|Essential Medicine": 57,
+    "May 2026|Essential Medicine": 58,
+    "August 2026|Essential Medicine": 67
+  },
+  "septemberTotals": {
+    "Antiretroviral Drugs": {
+      "expected": 1948,
+      "onTime": 1697,
+      "late": 0,
+      "missingReports": 251,
+      "namedNonReporting": 251
+    },
+    "Essential Medicine": {
+      "expected": 3381,
+      "onTime": 2871,
+      "late": 4,
+      "missingReports": 506,
+      "namedNonReporting": 480
+    }
+  },
+  "unmatchedFacilities": [
+    {
+      "facilityCode": "55030021",
+      "facility": "Chapemba Health post",
+      "period": "April 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "55030021",
+      "facility": "Chapemba Health post",
+      "period": "August 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "55030021",
+      "facility": "Chapemba Health post",
+      "period": "February 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "55030021",
+      "facility": "Chapemba Health post",
+      "period": "January 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "55030021",
+      "facility": "Chapemba Health post",
+      "period": "July 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "55030021",
+      "facility": "Chapemba Health post",
+      "period": "June 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "55030021",
+      "facility": "Chapemba Health post",
+      "period": "March 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "55030021",
+      "facility": "Chapemba Health post",
+      "period": "May 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010036",
+      "facility": "Chauluti Health Post",
+      "period": "April 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010036",
+      "facility": "Chauluti Health Post",
+      "period": "February 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010036",
+      "facility": "Chauluti Health Post",
+      "period": "January 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010036",
+      "facility": "Chauluti Health Post",
+      "period": "March 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010036",
+      "facility": "Chauluti Health Post",
+      "period": "May 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "55070024",
+      "facility": "Chibaye Health Post",
+      "period": "April 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "55070024",
+      "facility": "Chibaye Health Post",
+      "period": "August 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "55070024",
+      "facility": "Chibaye Health Post",
+      "period": "February 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "55070024",
+      "facility": "Chibaye Health Post",
+      "period": "January 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "55070024",
+      "facility": "Chibaye Health Post",
+      "period": "July 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "55070024",
+      "facility": "Chibaye Health Post",
+      "period": "June 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "55070024",
+      "facility": "Chibaye Health Post",
+      "period": "March 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "55070024",
+      "facility": "Chibaye Health Post",
+      "period": "May 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010037",
+      "facility": "Chilele Health Post",
+      "period": "April 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010037",
+      "facility": "Chilele Health Post",
+      "period": "February 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010037",
+      "facility": "Chilele Health Post",
+      "period": "January 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010037",
+      "facility": "Chilele Health Post",
+      "period": "March 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010037",
+      "facility": "Chilele Health Post",
+      "period": "May 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "55070023",
+      "facility": "Chitulika Mini Hospital",
+      "period": "April 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "55070023",
+      "facility": "Chitulika Mini Hospital",
+      "period": "August 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "55070023",
+      "facility": "Chitulika Mini Hospital",
+      "period": "February 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "55070023",
+      "facility": "Chitulika Mini Hospital",
+      "period": "January 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "55070023",
+      "facility": "Chitulika Mini Hospital",
+      "period": "July 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "55070023",
+      "facility": "Chitulika Mini Hospital",
+      "period": "June 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "55070023",
+      "facility": "Chitulika Mini Hospital",
+      "period": "March 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "55070023",
+      "facility": "Chitulika Mini Hospital",
+      "period": "May 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010038",
+      "facility": "Imilangu Health Post",
+      "period": "April 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010038",
+      "facility": "Imilangu Health Post",
+      "period": "February 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010038",
+      "facility": "Imilangu Health Post",
+      "period": "January 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010038",
+      "facility": "Imilangu Health Post",
+      "period": "March 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010038",
+      "facility": "Imilangu Health Post",
+      "period": "May 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010039",
+      "facility": "Ituya Health Post",
+      "period": "April 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010039",
+      "facility": "Ituya Health Post",
+      "period": "February 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010039",
+      "facility": "Ituya Health Post",
+      "period": "January 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010039",
+      "facility": "Ituya Health Post",
+      "period": "March 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010039",
+      "facility": "Ituya Health Post",
+      "period": "May 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010040",
+      "facility": "Kalumbu Health Post",
+      "period": "April 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010040",
+      "facility": "Kalumbu Health Post",
+      "period": "February 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010040",
+      "facility": "Kalumbu Health Post",
+      "period": "January 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010040",
+      "facility": "Kalumbu Health Post",
+      "period": "March 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010040",
+      "facility": "Kalumbu Health Post",
+      "period": "May 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "55030023",
+      "facility": "Kasoka Mini Hospital",
+      "period": "April 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "55030023",
+      "facility": "Kasoka Mini Hospital",
+      "period": "August 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "55030023",
+      "facility": "Kasoka Mini Hospital",
+      "period": "February 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "55030023",
+      "facility": "Kasoka Mini Hospital",
+      "period": "January 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "55030023",
+      "facility": "Kasoka Mini Hospital",
+      "period": "July 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "55030023",
+      "facility": "Kasoka Mini Hospital",
+      "period": "June 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "55030023",
+      "facility": "Kasoka Mini Hospital",
+      "period": "March 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "55030023",
+      "facility": "Kasoka Mini Hospital",
+      "period": "May 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010041",
+      "facility": "Libilingoma Health Post",
+      "period": "April 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010041",
+      "facility": "Libilingoma Health Post",
+      "period": "February 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010041",
+      "facility": "Libilingoma Health Post",
+      "period": "January 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010041",
+      "facility": "Libilingoma Health Post",
+      "period": "March 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010041",
+      "facility": "Libilingoma Health Post",
+      "period": "May 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010042",
+      "facility": "Lisumpila Health Post",
+      "period": "April 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010042",
+      "facility": "Lisumpila Health Post",
+      "period": "February 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010042",
+      "facility": "Lisumpila Health Post",
+      "period": "January 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010042",
+      "facility": "Lisumpila Health Post",
+      "period": "March 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010042",
+      "facility": "Lisumpila Health Post",
+      "period": "May 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010043",
+      "facility": "Liuwa Health Post",
+      "period": "April 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010043",
+      "facility": "Liuwa Health Post",
+      "period": "February 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010043",
+      "facility": "Liuwa Health Post",
+      "period": "January 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010043",
+      "facility": "Liuwa Health Post",
+      "period": "March 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010043",
+      "facility": "Liuwa Health Post",
+      "period": "May 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "55040026",
+      "facility": "Luchembe Mini Hospital",
+      "period": "April 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "55040026",
+      "facility": "Luchembe Mini Hospital",
+      "period": "August 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "55040026",
+      "facility": "Luchembe Mini Hospital",
+      "period": "February 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "55040026",
+      "facility": "Luchembe Mini Hospital",
+      "period": "January 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "55040026",
+      "facility": "Luchembe Mini Hospital",
+      "period": "July 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "55040026",
+      "facility": "Luchembe Mini Hospital",
+      "period": "June 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "55040026",
+      "facility": "Luchembe Mini Hospital",
+      "period": "March 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "55040026",
+      "facility": "Luchembe Mini Hospital",
+      "period": "May 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010044",
+      "facility": "Lupo Health Post",
+      "period": "April 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010044",
+      "facility": "Lupo Health Post",
+      "period": "February 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010044",
+      "facility": "Lupo Health Post",
+      "period": "January 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010044",
+      "facility": "Lupo Health Post",
+      "period": "March 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010044",
+      "facility": "Lupo Health Post",
+      "period": "May 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010045",
+      "facility": "Maoma Health Post",
+      "period": "April 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010045",
+      "facility": "Maoma Health Post",
+      "period": "February 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010045",
+      "facility": "Maoma Health Post",
+      "period": "January 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010045",
+      "facility": "Maoma Health Post",
+      "period": "March 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010045",
+      "facility": "Maoma Health Post",
+      "period": "May 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010046",
+      "facility": "Mbalala Health Post",
+      "period": "April 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010046",
+      "facility": "Mbalala Health Post",
+      "period": "February 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010046",
+      "facility": "Mbalala Health Post",
+      "period": "January 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010046",
+      "facility": "Mbalala Health Post",
+      "period": "March 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010046",
+      "facility": "Mbalala Health Post",
+      "period": "May 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010047",
+      "facility": "Mukola Health Post",
+      "period": "April 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010047",
+      "facility": "Mukola Health Post",
+      "period": "February 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010047",
+      "facility": "Mukola Health Post",
+      "period": "January 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010047",
+      "facility": "Mukola Health Post",
+      "period": "March 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010047",
+      "facility": "Mukola Health Post",
+      "period": "May 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010048",
+      "facility": "Munde Health Post",
+      "period": "April 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010048",
+      "facility": "Munde Health Post",
+      "period": "February 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010048",
+      "facility": "Munde Health Post",
+      "period": "January 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010048",
+      "facility": "Munde Health Post",
+      "period": "March 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010048",
+      "facility": "Munde Health Post",
+      "period": "May 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010049",
+      "facility": "Mutunda Health Post",
+      "period": "April 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010049",
+      "facility": "Mutunda Health Post",
+      "period": "February 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010049",
+      "facility": "Mutunda Health Post",
+      "period": "January 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010049",
+      "facility": "Mutunda Health Post",
+      "period": "March 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010049",
+      "facility": "Mutunda Health Post",
+      "period": "May 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010050",
+      "facility": "Mwandi Health Post (Kalabo)",
+      "period": "April 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010050",
+      "facility": "Mwandi Health Post (Kalabo)",
+      "period": "February 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010050",
+      "facility": "Mwandi Health Post (Kalabo)",
+      "period": "January 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010050",
+      "facility": "Mwandi Health Post (Kalabo)",
+      "period": "March 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010050",
+      "facility": "Mwandi Health Post (Kalabo)",
+      "period": "May 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "55080028",
+      "facility": "Nachipeta Health Post",
+      "period": "April 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "55080028",
+      "facility": "Nachipeta Health Post",
+      "period": "August 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "55080028",
+      "facility": "Nachipeta Health Post",
+      "period": "February 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "55080028",
+      "facility": "Nachipeta Health Post",
+      "period": "January 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "55080028",
+      "facility": "Nachipeta Health Post",
+      "period": "July 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "55080028",
+      "facility": "Nachipeta Health Post",
+      "period": "June 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "55080028",
+      "facility": "Nachipeta Health Post",
+      "period": "March 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "55080028",
+      "facility": "Nachipeta Health Post",
+      "period": "May 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "55080028",
+      "facility": "Nachipeta Health Post",
+      "period": "September 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010051",
+      "facility": "Nan'gole Health Post",
+      "period": "April 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010051",
+      "facility": "Nan'gole Health Post",
+      "period": "February 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010051",
+      "facility": "Nan'gole Health Post",
+      "period": "January 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010051",
+      "facility": "Nan'gole Health Post",
+      "period": "March 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010051",
+      "facility": "Nan'gole Health Post",
+      "period": "May 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "55080027",
+      "facility": "Nteko Health Post",
+      "period": "April 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "55080027",
+      "facility": "Nteko Health Post",
+      "period": "August 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "55080027",
+      "facility": "Nteko Health Post",
+      "period": "February 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "55080027",
+      "facility": "Nteko Health Post",
+      "period": "January 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "55080027",
+      "facility": "Nteko Health Post",
+      "period": "July 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "55080027",
+      "facility": "Nteko Health Post",
+      "period": "June 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "55080027",
+      "facility": "Nteko Health Post",
+      "period": "March 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "55080027",
+      "facility": "Nteko Health Post",
+      "period": "May 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010035",
+      "facility": "Sishekanu Mini Hospital",
+      "period": "April 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010035",
+      "facility": "Sishekanu Mini Hospital",
+      "period": "February 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010035",
+      "facility": "Sishekanu Mini Hospital",
+      "period": "January 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010035",
+      "facility": "Sishekanu Mini Hospital",
+      "period": "March 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "90010035",
+      "facility": "Sishekanu Mini Hospital",
+      "period": "May 2026",
+      "program": "Antiretroviral Drugs"
+    },
+    {
+      "facilityCode": "55030021",
+      "facility": "Chapemba Health post",
+      "period": "April 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55030021",
+      "facility": "Chapemba Health post",
+      "period": "August 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55030021",
+      "facility": "Chapemba Health post",
+      "period": "February 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55030021",
+      "facility": "Chapemba Health post",
+      "period": "January 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55030021",
+      "facility": "Chapemba Health post",
+      "period": "July 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55030021",
+      "facility": "Chapemba Health post",
+      "period": "June 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55030021",
+      "facility": "Chapemba Health post",
+      "period": "March 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55030021",
+      "facility": "Chapemba Health post",
+      "period": "May 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010036",
+      "facility": "Chauluti Health Post",
+      "period": "April 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010036",
+      "facility": "Chauluti Health Post",
+      "period": "February 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010036",
+      "facility": "Chauluti Health Post",
+      "period": "January 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010036",
+      "facility": "Chauluti Health Post",
+      "period": "March 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010036",
+      "facility": "Chauluti Health Post",
+      "period": "May 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55070024",
+      "facility": "Chibaye Health Post",
+      "period": "April 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55070024",
+      "facility": "Chibaye Health Post",
+      "period": "August 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55070024",
+      "facility": "Chibaye Health Post",
+      "period": "February 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55070024",
+      "facility": "Chibaye Health Post",
+      "period": "January 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55070024",
+      "facility": "Chibaye Health Post",
+      "period": "July 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55070024",
+      "facility": "Chibaye Health Post",
+      "period": "June 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55070024",
+      "facility": "Chibaye Health Post",
+      "period": "March 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55070024",
+      "facility": "Chibaye Health Post",
+      "period": "May 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010037",
+      "facility": "Chilele Health Post",
+      "period": "April 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010037",
+      "facility": "Chilele Health Post",
+      "period": "February 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010037",
+      "facility": "Chilele Health Post",
+      "period": "January 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010037",
+      "facility": "Chilele Health Post",
+      "period": "March 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010037",
+      "facility": "Chilele Health Post",
+      "period": "May 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55090023",
+      "facility": "Chinkumba Health Post",
+      "period": "April 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55090023",
+      "facility": "Chinkumba Health Post",
+      "period": "August 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55090023",
+      "facility": "Chinkumba Health Post",
+      "period": "February 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55090023",
+      "facility": "Chinkumba Health Post",
+      "period": "January 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55090023",
+      "facility": "Chinkumba Health Post",
+      "period": "July 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55090023",
+      "facility": "Chinkumba Health Post",
+      "period": "June 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55090023",
+      "facility": "Chinkumba Health Post",
+      "period": "March 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55090023",
+      "facility": "Chinkumba Health Post",
+      "period": "May 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55090023",
+      "facility": "Chinkumba Health Post",
+      "period": "September 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55020023",
+      "facility": "Chinsali Correctional Health",
+      "period": "April 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55020023",
+      "facility": "Chinsali Correctional Health",
+      "period": "August 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55020023",
+      "facility": "Chinsali Correctional Health",
+      "period": "February 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55020023",
+      "facility": "Chinsali Correctional Health",
+      "period": "January 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55020023",
+      "facility": "Chinsali Correctional Health",
+      "period": "July 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55020023",
+      "facility": "Chinsali Correctional Health",
+      "period": "June 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55020023",
+      "facility": "Chinsali Correctional Health",
+      "period": "March 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55020023",
+      "facility": "Chinsali Correctional Health",
+      "period": "May 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55070023",
+      "facility": "Chitulika Mini Hospital",
+      "period": "April 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55070023",
+      "facility": "Chitulika Mini Hospital",
+      "period": "August 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55070023",
+      "facility": "Chitulika Mini Hospital",
+      "period": "February 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55070023",
+      "facility": "Chitulika Mini Hospital",
+      "period": "January 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55070023",
+      "facility": "Chitulika Mini Hospital",
+      "period": "July 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55070023",
+      "facility": "Chitulika Mini Hospital",
+      "period": "June 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55070023",
+      "facility": "Chitulika Mini Hospital",
+      "period": "March 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55070023",
+      "facility": "Chitulika Mini Hospital",
+      "period": "May 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010038",
+      "facility": "Imilangu Health Post",
+      "period": "April 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010038",
+      "facility": "Imilangu Health Post",
+      "period": "February 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010038",
+      "facility": "Imilangu Health Post",
+      "period": "January 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010038",
+      "facility": "Imilangu Health Post",
+      "period": "March 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010038",
+      "facility": "Imilangu Health Post",
+      "period": "May 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010039",
+      "facility": "Ituya Health Post",
+      "period": "April 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010039",
+      "facility": "Ituya Health Post",
+      "period": "February 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010039",
+      "facility": "Ituya Health Post",
+      "period": "January 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010039",
+      "facility": "Ituya Health Post",
+      "period": "March 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010039",
+      "facility": "Ituya Health Post",
+      "period": "May 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010040",
+      "facility": "Kalumbu Health Post",
+      "period": "April 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010040",
+      "facility": "Kalumbu Health Post",
+      "period": "February 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010040",
+      "facility": "Kalumbu Health Post",
+      "period": "January 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010040",
+      "facility": "Kalumbu Health Post",
+      "period": "March 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010040",
+      "facility": "Kalumbu Health Post",
+      "period": "May 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55030023",
+      "facility": "Kasoka Mini Hospital",
+      "period": "April 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55030023",
+      "facility": "Kasoka Mini Hospital",
+      "period": "August 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55030023",
+      "facility": "Kasoka Mini Hospital",
+      "period": "February 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55030023",
+      "facility": "Kasoka Mini Hospital",
+      "period": "January 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55030023",
+      "facility": "Kasoka Mini Hospital",
+      "period": "July 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55030023",
+      "facility": "Kasoka Mini Hospital",
+      "period": "June 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55030023",
+      "facility": "Kasoka Mini Hospital",
+      "period": "March 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55030023",
+      "facility": "Kasoka Mini Hospital",
+      "period": "May 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010041",
+      "facility": "Libilingoma Health Post",
+      "period": "April 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010041",
+      "facility": "Libilingoma Health Post",
+      "period": "February 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010041",
+      "facility": "Libilingoma Health Post",
+      "period": "January 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010041",
+      "facility": "Libilingoma Health Post",
+      "period": "March 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010041",
+      "facility": "Libilingoma Health Post",
+      "period": "May 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010042",
+      "facility": "Lisumpila Health Post",
+      "period": "April 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010042",
+      "facility": "Lisumpila Health Post",
+      "period": "February 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010042",
+      "facility": "Lisumpila Health Post",
+      "period": "January 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010042",
+      "facility": "Lisumpila Health Post",
+      "period": "March 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010042",
+      "facility": "Lisumpila Health Post",
+      "period": "May 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010043",
+      "facility": "Liuwa Health Post",
+      "period": "April 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010043",
+      "facility": "Liuwa Health Post",
+      "period": "February 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010043",
+      "facility": "Liuwa Health Post",
+      "period": "January 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010043",
+      "facility": "Liuwa Health Post",
+      "period": "March 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010043",
+      "facility": "Liuwa Health Post",
+      "period": "May 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55040026",
+      "facility": "Luchembe Mini Hospital",
+      "period": "April 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55040026",
+      "facility": "Luchembe Mini Hospital",
+      "period": "August 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55040026",
+      "facility": "Luchembe Mini Hospital",
+      "period": "February 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55040026",
+      "facility": "Luchembe Mini Hospital",
+      "period": "January 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55040026",
+      "facility": "Luchembe Mini Hospital",
+      "period": "July 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55040026",
+      "facility": "Luchembe Mini Hospital",
+      "period": "June 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55040026",
+      "facility": "Luchembe Mini Hospital",
+      "period": "March 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55040026",
+      "facility": "Luchembe Mini Hospital",
+      "period": "May 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010044",
+      "facility": "Lupo Health Post",
+      "period": "April 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010044",
+      "facility": "Lupo Health Post",
+      "period": "February 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010044",
+      "facility": "Lupo Health Post",
+      "period": "January 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010044",
+      "facility": "Lupo Health Post",
+      "period": "March 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010044",
+      "facility": "Lupo Health Post",
+      "period": "May 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010044",
+      "facility": "Lupo Health Post",
+      "period": "September 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010045",
+      "facility": "Maoma Health Post",
+      "period": "April 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010045",
+      "facility": "Maoma Health Post",
+      "period": "February 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010045",
+      "facility": "Maoma Health Post",
+      "period": "January 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010045",
+      "facility": "Maoma Health Post",
+      "period": "March 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010045",
+      "facility": "Maoma Health Post",
+      "period": "May 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55090022",
+      "facility": "Mayembe Health Post",
+      "period": "April 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55090022",
+      "facility": "Mayembe Health Post",
+      "period": "August 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55090022",
+      "facility": "Mayembe Health Post",
+      "period": "February 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55090022",
+      "facility": "Mayembe Health Post",
+      "period": "January 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55090022",
+      "facility": "Mayembe Health Post",
+      "period": "July 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55090022",
+      "facility": "Mayembe Health Post",
+      "period": "June 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55090022",
+      "facility": "Mayembe Health Post",
+      "period": "March 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55090022",
+      "facility": "Mayembe Health Post",
+      "period": "May 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55090022",
+      "facility": "Mayembe Health Post",
+      "period": "September 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010046",
+      "facility": "Mbalala Health Post",
+      "period": "April 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010046",
+      "facility": "Mbalala Health Post",
+      "period": "February 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010046",
+      "facility": "Mbalala Health Post",
+      "period": "January 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010046",
+      "facility": "Mbalala Health Post",
+      "period": "March 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010046",
+      "facility": "Mbalala Health Post",
+      "period": "May 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55020024",
+      "facility": "Mbesuma Health Post",
+      "period": "April 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55020024",
+      "facility": "Mbesuma Health Post",
+      "period": "August 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55020024",
+      "facility": "Mbesuma Health Post",
+      "period": "February 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55020024",
+      "facility": "Mbesuma Health Post",
+      "period": "January 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55020024",
+      "facility": "Mbesuma Health Post",
+      "period": "July 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55020024",
+      "facility": "Mbesuma Health Post",
+      "period": "June 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55020024",
+      "facility": "Mbesuma Health Post",
+      "period": "March 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55020024",
+      "facility": "Mbesuma Health Post",
+      "period": "May 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55030022",
+      "facility": "Milongo Health Post",
+      "period": "April 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55030022",
+      "facility": "Milongo Health Post",
+      "period": "August 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55030022",
+      "facility": "Milongo Health Post",
+      "period": "February 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55030022",
+      "facility": "Milongo Health Post",
+      "period": "January 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55030022",
+      "facility": "Milongo Health Post",
+      "period": "July 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55030022",
+      "facility": "Milongo Health Post",
+      "period": "June 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55030022",
+      "facility": "Milongo Health Post",
+      "period": "March 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55030022",
+      "facility": "Milongo Health Post",
+      "period": "May 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010047",
+      "facility": "Mukola Health Post",
+      "period": "April 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010047",
+      "facility": "Mukola Health Post",
+      "period": "February 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010047",
+      "facility": "Mukola Health Post",
+      "period": "January 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010047",
+      "facility": "Mukola Health Post",
+      "period": "March 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010047",
+      "facility": "Mukola Health Post",
+      "period": "May 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55090024",
+      "facility": "Mukungwa health Post",
+      "period": "April 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55090024",
+      "facility": "Mukungwa health Post",
+      "period": "August 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55090024",
+      "facility": "Mukungwa health Post",
+      "period": "February 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55090024",
+      "facility": "Mukungwa health Post",
+      "period": "January 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55090024",
+      "facility": "Mukungwa health Post",
+      "period": "July 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55090024",
+      "facility": "Mukungwa health Post",
+      "period": "June 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55090024",
+      "facility": "Mukungwa health Post",
+      "period": "March 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55090024",
+      "facility": "Mukungwa health Post",
+      "period": "May 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55090024",
+      "facility": "Mukungwa health Post",
+      "period": "September 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010048",
+      "facility": "Munde Health Post",
+      "period": "April 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010048",
+      "facility": "Munde Health Post",
+      "period": "February 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010048",
+      "facility": "Munde Health Post",
+      "period": "January 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010048",
+      "facility": "Munde Health Post",
+      "period": "March 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010048",
+      "facility": "Munde Health Post",
+      "period": "May 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010049",
+      "facility": "Mutunda Health Post",
+      "period": "April 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010049",
+      "facility": "Mutunda Health Post",
+      "period": "February 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010049",
+      "facility": "Mutunda Health Post",
+      "period": "January 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010049",
+      "facility": "Mutunda Health Post",
+      "period": "March 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010049",
+      "facility": "Mutunda Health Post",
+      "period": "May 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010050",
+      "facility": "Mwandi Health Post (Kalabo)",
+      "period": "April 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010050",
+      "facility": "Mwandi Health Post (Kalabo)",
+      "period": "February 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010050",
+      "facility": "Mwandi Health Post (Kalabo)",
+      "period": "January 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010050",
+      "facility": "Mwandi Health Post (Kalabo)",
+      "period": "March 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010050",
+      "facility": "Mwandi Health Post (Kalabo)",
+      "period": "May 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55080028",
+      "facility": "Nachipeta Health Post",
+      "period": "April 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55080028",
+      "facility": "Nachipeta Health Post",
+      "period": "August 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55080028",
+      "facility": "Nachipeta Health Post",
+      "period": "February 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55080028",
+      "facility": "Nachipeta Health Post",
+      "period": "January 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55080028",
+      "facility": "Nachipeta Health Post",
+      "period": "July 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55080028",
+      "facility": "Nachipeta Health Post",
+      "period": "June 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55080028",
+      "facility": "Nachipeta Health Post",
+      "period": "March 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55080028",
+      "facility": "Nachipeta Health Post",
+      "period": "May 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010051",
+      "facility": "Nan'gole Health Post",
+      "period": "April 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010051",
+      "facility": "Nan'gole Health Post",
+      "period": "February 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010051",
+      "facility": "Nan'gole Health Post",
+      "period": "January 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010051",
+      "facility": "Nan'gole Health Post",
+      "period": "March 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010051",
+      "facility": "Nan'gole Health Post",
+      "period": "May 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55080027",
+      "facility": "Nteko Health Post",
+      "period": "April 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55080027",
+      "facility": "Nteko Health Post",
+      "period": "August 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55080027",
+      "facility": "Nteko Health Post",
+      "period": "February 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55080027",
+      "facility": "Nteko Health Post",
+      "period": "January 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55080027",
+      "facility": "Nteko Health Post",
+      "period": "July 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55080027",
+      "facility": "Nteko Health Post",
+      "period": "June 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55080027",
+      "facility": "Nteko Health Post",
+      "period": "March 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55080027",
+      "facility": "Nteko Health Post",
+      "period": "May 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010035",
+      "facility": "Sishekanu Mini Hospital",
+      "period": "April 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010035",
+      "facility": "Sishekanu Mini Hospital",
+      "period": "February 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010035",
+      "facility": "Sishekanu Mini Hospital",
+      "period": "January 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010035",
+      "facility": "Sishekanu Mini Hospital",
+      "period": "March 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "90010035",
+      "facility": "Sishekanu Mini Hospital",
+      "period": "May 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55020021",
+      "facility": "Zambia Army Clinic",
+      "period": "April 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55020021",
+      "facility": "Zambia Army Clinic",
+      "period": "August 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55020021",
+      "facility": "Zambia Army Clinic",
+      "period": "February 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55020021",
+      "facility": "Zambia Army Clinic",
+      "period": "January 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55020021",
+      "facility": "Zambia Army Clinic",
+      "period": "July 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55020021",
+      "facility": "Zambia Army Clinic",
+      "period": "June 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55020021",
+      "facility": "Zambia Army Clinic",
+      "period": "March 2026",
+      "program": "Essential Medicine"
+    },
+    {
+      "facilityCode": "55020021",
+      "facility": "Zambia Army Clinic",
+      "period": "May 2026",
+      "program": "Essential Medicine"
+    }
+  ],
+  "coverage": {
+    "nonReportingPeriods": [
+      "January 2026",
+      "February 2026",
+      "March 2026",
+      "April 2026",
+      "May 2026",
+      "June 2026",
+      "July 2026",
+      "August 2026",
+      "September 2026"
+    ],
+    "partialReportingPeriods": [
+      "May 2026",
+      "June 2026",
+      "July 2026",
+      "August 2026",
+      "September 2026"
+    ],
+    "timelinessPeriods": [
+      "September 2026"
+    ],
+    "sources": [
+      "January to September 2026 Non Reporting Facilities.xls",
+      "September 2026 Timeliness Reporting, Zambia.xls"
+    ]
+  }
+}
