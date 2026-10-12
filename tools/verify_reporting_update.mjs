@@ -4,6 +4,9 @@ import { readFileSync } from "node:fs";
 import { dashboardData as data } from "../src/dashboardData.js";
 import { reportingMetrics, groupedReportingMetrics, percent } from "../src/reportingMetrics.js";
 
+if (data.reportingUpdate?.reportingStatusSource) {
+  await import("./verify_reporting_status.mjs");
+} else {
 const audit = JSON.parse(readFileSync(new URL("../reconciliation/reporting-january-september-2026.json", import.meta.url)));
 for (const [key, expected] of Object.entries(audit.nonReportingCounts)) {
   const [period, program] = key.split("|");
@@ -44,3 +47,4 @@ assert.deepEqual(data.facilityMetadata, previous.facilityMetadata, "Facility met
 assert.deepEqual(data.reportingRows.filter((r) => !r.period.endsWith("2026")), previous.reportingRows.filter((r) => !r.period.endsWith("2026")), "Historical reporting preserved");
 assert.deepEqual(data.timelinessRows.filter((r) => r.period !== "September 2026"), previous.timelinessRows, "Earlier timeliness preserved");
 console.log("Verified 1,596 named EM/ARV non-reporting records across January-September, 231 September district rows, source totals, missing-month handling, and unchanged training/history.");
+}

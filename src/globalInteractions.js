@@ -30,10 +30,11 @@ function currentFilter(label){const card=[...document.querySelectorAll('.filter-
 function pageLabel(){return [...document.querySelectorAll('.side-menu button.active')][0]?.textContent.replace(/\s+/g,' ').trim()||'';}
 function rowMatchesDashboardFilters(r){const period=currentFilter('Period'),program=currentFilter('Program'),province=currentFilter('Province'),district=currentFilter('District');return (period==='All'||!r.period||r.period===period)&&(program==='All'||!r.program||r.program===program)&&(province==='All'||!r.province||r.province===province)&&(district==='All'||!r.district||r.district===district);}
 function submitted(r){const s=norm(r.status).toUpperCase();const d=norm(r.dateReceived);if(s.includes('NON_REPORT')||s.includes('NOT_REPORT')||s.includes('DID_NOT_REPORT')||s==='NO'||s==='MISSING')return false;return !!d&&!['-','--','N/A','NA','NIL','NONE','NULL'].includes(d.toUpperCase())||s==='REPORTING'||s==='REPORTED'||s.includes('SUBMIT')||s.includes('RECEIV');}
-function statusRows(){return reportingRows.filter(rowMatchesDashboardFilters).map(r=>({facilityCode:r.facilityCode,facility:r.facility,facilityType:r.facilityType,province:r.province,district:r.district,program:r.program,period:r.period,dateReceived:r.dateReceived,status:submitted(r)?'REPORTING':'NON_REPORTING',reportingRate:submitted(r)?100:0}));}
+function statusRows(){return reportingRows.filter(rowMatchesDashboardFilters).map(r=>({facilityCode:r.facilityCode,facility:r.facility,facilityType:r.facilityType,province:r.province,district:r.district,program:r.program,period:r.period,dateReceived:r.dateReceived,sourceStatus:r.status,status:submitted(r)?'REPORTING':'NON_REPORTING',reportingRate:submitted(r)?100:0}));}
 function participantRows(){const province=currentFilter('Province'),district=currentFilter('District');return participants.filter(p=>(province==='All'||p.province===province)&&(district==='All'||p.district===district));}
 function timelinessData(){return timelinessRows.filter(rowMatchesDashboardFilters).map(r=>({province:r.province,district:r.district,program:r.program,period:r.period,expected:r.expected,reportedOnTime:r.reportedOnTime,reportedLate:r.reportedLate,timeliness:r.timeliness}));}
 function uniqueFacility(rows){const m=new Map();rows.forEach(r=>{const k=r.facilityCode||`${r.province}|${r.district}|${r.facility}`;if(!m.has(k))m.set(k,r);});return [...m.values()];}
+function fullyReportedFacilities(rows){const missing=new Set(uniqueFacility(rows.filter(r=>r.status==='NON_REPORTING')).map(r=>r.facilityCode||`${r.province}|${r.district}|${r.facility}`));return uniqueFacility(rows).filter(r=>!missing.has(r.facilityCode||`${r.province}|${r.district}|${r.facility}`)).map(r=>{const facilityRows=rows.filter(x=>(x.facilityCode||`${x.province}|${x.district}|${x.facility}`)===(r.facilityCode||`${r.province}|${r.district}|${r.facility}`));return {...r,program:facilityRows.map(x=>x.program).join('; '),sourceStatus:facilityRows.map(x=>`${x.program}: ${x.sourceStatus}`).join('; ')};});}
 function lateRows(){return timelinessData().filter(r=>Number(r.reportedLate)>0);}
 function titleRows(label){
   const l=label.toLowerCase(),s=statusRows(),p=participantRows();
@@ -43,7 +44,7 @@ function titleRows(label){
   if(l.includes('users trained'))return p.filter(r=>r.role==='User');
   if(l.includes('trained')||l.includes('personnel')||l.includes('participant'))return p;
   if(l.includes('non-report'))return s.filter(r=>r.status==='NON_REPORTING');
-  if(l.includes('facilities reported'))return partial?[]:uniqueFacility(s.filter(r=>r.status==='REPORTING'));
+  if(l.includes('facilities reported'))return partial?[]:fullyReportedFacilities(s);
   if(l.includes('timeliness')||l.includes('late'))return l.includes('late')?lateRows():timelinessData();
   if(l.includes('district'))return groupedReportingMetrics(s,timelinessData(),'district',partial);
   if(l.includes('reporting')&&partial)return timelinessData().map(r=>({...r,reported:r.reportedOnTime+r.reportedLate,reportingRate:r.expected?(r.reportedOnTime+r.reportedLate)/r.expected*100:null}));

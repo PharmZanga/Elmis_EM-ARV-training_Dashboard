@@ -6,6 +6,11 @@ import { percent, count, reportingMetrics, groupedReportingMetrics } from "./rep
 import "./styles.css";
 
 const { participants, reportingRows, timelinessRows, facilityMetadata = [], reportingUpdate = {} } = dashboardData;
+const reportingSeries = [
+  { key: "Essential Medicine", label: "EM", color: "#147a46" },
+  { key: "Antiretroviral Drugs", label: "ARV", color: "#195e8f" },
+  { key: "Laboratory Commodities", label: "LAB", color: "#a96e00" },
+];
 const menuItems = [
   ["executive", "1", "Executive"],
   ["reports", "2", "eLMIS Reports"],
@@ -126,7 +131,7 @@ function DashboardApp() {
   const partialReporting = (reportingUpdate.partialReportingPeriods || []).includes(selectedPeriod);
   const facilitySemantics = useMemo(() => {
     const values = getFacilityReportingSemantics(filteredReporting);
-    return partialReporting ? { ...values, facilitiesExpected: null, facilitiesReported: null } : values;
+    return partialReporting || !filteredReporting.length ? { ...values, facilitiesExpected: null, facilitiesReported: null } : values;
   }, [filteredReporting, partialReporting]);
   const totals = useMemo(() => ({
     ...getTotals(filteredReporting, filteredTimeliness, filteredParticipants),
@@ -144,8 +149,8 @@ function DashboardApp() {
     : provincePerformance(filteredReporting), [filteredReporting, filteredTimeliness, partialReporting]);
   const followUps = useMemo(() => taskFollowUps(statusRows, filteredTimeliness), [statusRows, filteredTimeliness]);
   const provinceCards = useMemo(() => provinceTrainingPerformance(provinceTicker, filteredParticipants), [provinceTicker, filteredParticipants]);
-  const monthlyTrends = useMemo(() => monthlyProgramTrends(reportingRows, selectedProvince, selectedDistrict), [selectedProvince, selectedDistrict]);
-  const insights = useMemo(() => buildInsights(provinceTicker, statusRows, filteredParticipants), [provinceTicker, statusRows, filteredParticipants]);
+  const monthlyTrends = useMemo(() => monthlyProgramTrends(reportingRows, selectedProvince, selectedDistrict, selectedProgram, selectedPeriod), [selectedProvince, selectedDistrict, selectedProgram, selectedPeriod]);
+  const insights = useMemo(() => buildInsights(provinceTicker, statusRows, filteredParticipants, selectedProgram), [provinceTicker, statusRows, filteredParticipants, selectedProgram]);
   const priorityRows = useMemo(() => priorityActions(followUps, provinceTicker, filteredParticipants), [followUps, provinceTicker, filteredParticipants]);
 
   return (
@@ -156,7 +161,7 @@ function DashboardApp() {
             <div className="crest"><img src="./zambia-coat-of-arms.svg" alt="Zambia Coat of Arms" /></div>
             <div>
               <span className="eyebrow">Ministry of Health Zambia</span>
-              <h1>eLMIS EM and ARV Training Dashboard</h1>
+              <h1>eLMIS EM, ARV and Laboratory Dashboard</h1>
             </div>
           </div>
           <div className="tower-brand">
@@ -211,6 +216,15 @@ function DashboardApp() {
                 {selectedPeriod === "September 2026" && <span>The national EM district totals imply 506 missing reports; the supplied list names 480. These source figures are kept separate.</span>}
               </div>
             )}
+            {!isTrainingPage && (reportingUpdate.fullReportingPeriods || []).includes(selectedPeriod) && (
+              <div className="training-date-note" role="status">
+                <span>Facility reporting uses the January-September 2026 status snapshot. Timeliness uses separate district totals.</span>
+                {!filteredTimeliness.length && <span>Timeliness data was not supplied for this selection.</span>}
+                {filteredTimeliness.length > 0 && selectedPeriod !== "September 2026" && selectedProgram === "All" && <span>Timeliness covers EM and ARV only; Laboratory timeliness was not supplied for this month.</span>}
+                {selectedPeriod === "September 2026" && <span>September reporting status and timeliness snapshots have different expected and missing-report totals.</span>}
+              </div>
+            )}
+            {!isTrainingPage && !filteredReporting.length && <div className="training-date-note" role="status">No facility reporting roster was supplied for this program and period.</div>}
             {isTrainingPage && (
               <div className="training-date-note" role="status">
                 <strong>Cumulative through {selectedPeriod}: {filteredParticipants.length.toLocaleString()} trained</strong>
@@ -369,7 +383,7 @@ function ExecutivePage({ totals, statusRows, participants, districtBars, provinc
         <section className="grid executive-grid executive-tab-panel">
           <Panel title="Executive Summary" className="summary-landscape compact-summary">
             <div className="summary-copy">
-              <p>The eLMIS EM and ARV Training Dashboard provides a national view of reporting performance, timeliness, reporting gaps and workforce capacity across Zambia's health supply chain. It helps managers identify facilities and districts requiring follow-up and supports evidence-based action.</p>
+              <p>The eLMIS EM, ARV and Laboratory Dashboard provides a national view of reporting performance, timeliness, reporting gaps and workforce capacity across Zambia's health supply chain. It helps managers identify facilities and districts requiring follow-up and supports evidence-based action.</p>
               <p>By bringing reporting and training indicators into one platform, the dashboard strengthens accountability, data visibility and targeted support for reliable logistics information and continuous availability of essential medicines and antiretroviral commodities.</p>
             </div>
           </Panel>
@@ -382,7 +396,7 @@ function ExecutivePage({ totals, statusRows, participants, districtBars, provinc
 
       {executiveTab === "trends" && (
         <section className="grid executive-grid executive-tab-panel executive-trends-grid">
-          <Panel title="Monthly EM and ARV Reporting Trends" className="executive-wide-panel"><MonthlyTrendChart values={monthlyTrends} /></Panel>
+          <Panel title="Monthly EM, ARV and Laboratory Reporting Trends" className="executive-wide-panel"><MonthlyTrendChart values={monthlyTrends} /></Panel>
           <Panel title="Facility Reporting Status"><Pie reporting={totals.facilitiesReported} nonReporting={totals.nonReportingFacilities} /></Panel>
           <Panel title="Profession Mix"><Donut counts={professionCounts} /></Panel>
         </section>
@@ -451,7 +465,7 @@ function KpiPage({ totals, statusRows, districtBars, submissionTrend, provinceTi
       </section>
       <section className="map-trend-row">
         <Panel title="Zambia Provincial Performance" className="map-panel" detailRows={provinceCards} detailColumns={["province", "reportingRate", "reporting", "expected", "training"]}><ProvincePerformanceMap values={provinceCards} /></Panel>
-        <Panel title="Monthly EM and ARV Reporting Trends" detailRows={monthlyTrends} detailColumns={["label", "Essential Medicine", "Antiretroviral Drugs"]}><MonthlyTrendChart values={monthlyTrends} /></Panel>
+        <Panel title="Monthly EM, ARV and Laboratory Reporting Trends" detailRows={monthlyTrends} detailColumns={["label", ...reportingSeries.filter((series) => monthlyTrends.some((row) => series.key in row)).map((series) => series.key)]}><MonthlyTrendChart values={monthlyTrends} /></Panel>
       </section>
     </>
   );
@@ -1095,7 +1109,7 @@ function FilterGroup({ title, items, selected, onSelect }) {
     <section className="filter-card">
       <label htmlFor={`filter-${title}`}>{title}</label>
       <select id={`filter-${title}`} value={selected} onChange={(event) => onSelect(event.target.value)}>
-        {items.map((item) => <option key={item} value={item}>{item}</option>)}
+        {items.map((item) => <option key={item} value={item}>{title === "Program" && item === "Laboratory Commodities" ? "Laboratory" : item}</option>)}
       </select>
     </section>
   );
@@ -1383,10 +1397,8 @@ function LineChart({ values }) {
 }
 
 function MonthlyTrendChart({ values }) {
-  const series = [
-    { key: "Essential Medicine", label: "EM", color: "#147a46" },
-    { key: "Antiretroviral Drugs", label: "ARV", color: "#195e8f" },
-  ];
+  const series = reportingSeries.filter((item) => values.some((row) => item.key in row));
+  if (!values.some((row) => series.some((item) => Number.isFinite(row[item.key])))) return <div className="empty-state">Reporting data was not supplied for this selection.</div>;
   const toSegments = (key) => {
     const segments = [];
     let points = [];
@@ -1487,15 +1499,15 @@ function provinceTrainingPerformance(provinceStats, traineeRows) {
   }));
 }
 
-function monthlyProgramTrends(rows, province, district) {
-  const programs = ["Essential Medicine", "Antiretroviral Drugs"];
+function monthlyProgramTrends(rows, province, district, selectedProgram, selectedPeriod) {
+  const programs = reportingSeries.map((series) => series.key).filter((program) => selectedProgram === "All" || program === selectedProgram);
   const scopedRows = rows.filter((row) => (
     (province === "All" || row.province === province) &&
     (district === "All" || row.district === district) &&
     programs.includes(row.program)
   ));
   const periods = sortPeriods(unique(scopedRows.map((row) => row.period)));
-  const latestYear = periods.at(-1)?.split(" ")[1];
+  const latestYear = selectedPeriod.split(" ")[1];
   return periods.filter((period) => period.endsWith(` ${latestYear}`)).map((period) => {
     const record = { label: `${period.split(" ")[0].slice(0, 3)} ${period.split(" ")[1]}` };
     programs.forEach((program) => {
@@ -1507,7 +1519,7 @@ function monthlyProgramTrends(rows, province, district) {
   });
 }
 
-function buildInsights(provinceStats, statusRows, traineeRows) {
+function buildInsights(provinceStats, statusRows, traineeRows, selectedProgram) {
   if (statusRows.some((row) => row.nonReportingOnly)) {
     return [{ label: "Reporting coverage", tone: "info", text: "Follow-ups use the supplied named non-reporting facilities. Reporting rates use district totals where available." }];
   }
@@ -1523,9 +1535,9 @@ function buildInsights(provinceStats, statusRows, traineeRows) {
       text: `${lowest.province} requires follow-up due to ${lowest.reportingRate.toFixed(1)}% reporting.`,
     },
     {
-      label: "ARV focus",
+      label: selectedProgram === "Laboratory Commodities" ? "Laboratory focus" : "ARV focus",
       tone: arvProvince.reportingRate < 95 ? "warning" : "good",
-      text: `${arvProvince.province} requires follow-up due to low ARV reporting.`,
+      text: `${arvProvince.province} has ${percent(arvProvince.reportingRate)} ${selectedProgram === "Laboratory Commodities" ? "Laboratory" : "ARV"} reporting.`,
     },
     {
       label: "Training coverage",

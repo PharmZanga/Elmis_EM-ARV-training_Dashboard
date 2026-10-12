@@ -1,0 +1,459 @@
+{
+  "sources": [
+    {
+      "file": "Jan to Sep Reporting Status 2026.xls",
+      "sha256": "49c93800bd673c38eaf61e9daccd905df4e47f96cb56f490ee16ebc3680e660f"
+    },
+    {
+      "file": "September 2026 Timeliness Reporting, Zambia.xls",
+      "sha256": "915af318f6eb625f33681ee3c995c212815ba82b6e8c5ebd95451bd322b5f85a"
+    }
+  ],
+  "programs": [
+    "Antiretroviral Drugs",
+    "Essential Medicine",
+    "Laboratory Commodities"
+  ],
+  "sheets": {
+    "January 2026|Antiretroviral Drugs": {
+      "sheet": "Jan ARV",
+      "expected": 1953,
+      "statuses": {
+        "NON_REPORTING": 49,
+        "IN_APPROVAL": 1435,
+        "RELEASED": 315,
+        "APPROVED": 139,
+        "AUTHORIZED": 15
+      }
+    },
+    "January 2026|Essential Medicine": {
+      "sheet": "Jan EM",
+      "expected": 3381,
+      "statuses": {
+        "NON_REPORTING": 70,
+        "RELEASED": 481,
+        "IN_APPROVAL": 2554,
+        "APPROVED": 254,
+        "AUTHORIZED": 20,
+        "RELEASED_NO_ORDER": 2
+      }
+    },
+    "January 2026|Laboratory Commodities": {
+      "sheet": "Jan LAB",
+      "expected": 639,
+      "statuses": {
+        "NON_REPORTING": 34,
+        "IN_APPROVAL": 475,
+        "RELEASED": 123,
+        "APPROVED": 7
+      }
+    },
+    "February 2026|Antiretroviral Drugs": {
+      "sheet": "Feb ARV",
+      "expected": 1953,
+      "statuses": {
+        "NON_REPORTING": 59,
+        "IN_APPROVAL": 1442,
+        "RELEASED": 275,
+        "APPROVED": 173,
+        "AUTHORIZED": 4
+      }
+    },
+    "February 2026|Essential Medicine": {
+      "sheet": "Feb EM",
+      "expected": 3381,
+      "statuses": {
+        "NON_REPORTING": 85,
+        "IN_APPROVAL": 2264,
+        "APPROVED": 273,
+        "RELEASED": 751,
+        "AUTHORIZED": 7,
+        "RELEASED_NO_ORDER": 1
+      }
+    },
+    "February 2026|Laboratory Commodities": {
+      "sheet": "Feb LAB",
+      "expected": 639,
+      "statuses": {
+        "NON_REPORTING": 39,
+        "IN_APPROVAL": 469,
+        "RELEASED": 125,
+        "APPROVED": 6
+      }
+    },
+    "March 2026|Antiretroviral Drugs": {
+      "sheet": "Mar ARV",
+      "expected": 1953,
+      "statuses": {
+        "NON_REPORTING": 46,
+        "IN_APPROVAL": 1418,
+        "RELEASED": 324,
+        "APPROVED": 161,
+        "AUTHORIZED": 4
+      }
+    },
+    "March 2026|Essential Medicine": {
+      "sheet": "Mar EM",
+      "expected": 3381,
+      "statuses": {
+        "NON_REPORTING": 57,
+        "IN_APPROVAL": 2324,
+        "RELEASED": 809,
+        "APPROVED": 175,
+        "AUTHORIZED": 16
+      }
+    },
+    "March 2026|Laboratory Commodities": {
+      "sheet": "Mar Lab",
+      "expected": 639,
+      "statuses": {
+        "NON_REPORTING": 35,
+        "RELEASED": 176,
+        "IN_APPROVAL": 421,
+        "AUTHORIZED": 3,
+        "APPROVED": 4
+      }
+    },
+    "April 2026|Antiretroviral Drugs": {
+      "sheet": "Apr ARV",
+      "expected": 1953,
+      "statuses": {
+        "NON_REPORTING": 47,
+        "RELEASED": 279,
+        "IN_APPROVAL": 1547,
+        "APPROVED": 78,
+        "AUTHORIZED": 2
+      }
+    },
+    "April 2026|Essential Medicine": {
+      "sheet": "Apr EM",
+      "expected": 3381,
+      "statuses": {
+        "NON_REPORTING": 55,
+        "IN_APPROVAL": 2463,
+        "RELEASED": 759,
+        "AUTHORIZED": 33,
+        "APPROVED": 71
+      }
+    },
+    "April 2026|Laboratory Commodities": {
+      "sheet": "Apr LAB",
+      "expected": 639,
+      "statuses": {
+        "NON_REPORTING": 34,
+        "IN_APPROVAL": 444,
+        "RELEASED": 156,
+        "AUTHORIZED": 2,
+        "APPROVED": 3
+      }
+    },
+    "May 2026|Antiretroviral Drugs": {
+      "sheet": "May ARV",
+      "expected": 1953,
+      "statuses": {
+        "NON_REPORTING": 48,
+        "IN_APPROVAL": 1394,
+        "AUTHORIZED": 5,
+        "RELEASED": 467,
+        "APPROVED": 39
+      }
+    },
+    "May 2026|Essential Medicine": {
+      "sheet": "May EM",
+      "expected": 3381,
+      "statuses": {
+        "NON_REPORTING": 58,
+        "IN_APPROVAL": 2229,
+        "RELEASED": 977,
+        "APPROVED": 95,
+        "AUTHORIZED": 22
+      }
+    },
+    "May 2026|Laboratory Commodities": {
+      "sheet": "May LAB",
+      "expected": 639,
+      "statuses": {
+        "NON_REPORTING": 37,
+        "IN_APPROVAL": 328,
+        "RELEASED": 268,
+        "AUTHORIZED": 2,
+        "APPROVED": 4
+      }
+    },
+    "June 2026|Antiretroviral Drugs": {
+      "sheet": "Jun ARV",
+      "expected": 1953,
+      "statuses": {
+        "NON_REPORTING": 34,
+        "RELEASED": 435,
+        "IN_APPROVAL": 1437,
+        "AUTHORIZED": 10,
+        "APPROVED": 36,
+        "RELEASED_NO_ORDER": 1
+      }
+    },
+    "June 2026|Essential Medicine": {
+      "sheet": "Jun EM",
+      "expected": 3381,
+      "statuses": {
+        "NON_REPORTING": 44,
+        "RELEASED": 1138,
+        "IN_APPROVAL": 2056,
+        "AUTHORIZED": 54,
+        "APPROVED": 88,
+        "RELEASED_NO_ORDER": 1
+      }
+    },
+    "June 2026|Laboratory Commodities": {
+      "sheet": "Jun LAB",
+      "expected": 639,
+      "statuses": {
+        "NON_REPORTING": 35,
+        "RELEASED": 215,
+        "IN_APPROVAL": 378,
+        "APPROVED": 7,
+        "AUTHORIZED": 4
+      }
+    },
+    "July 2026|Antiretroviral Drugs": {
+      "sheet": "Jul ARV",
+      "expected": 1953,
+      "statuses": {
+        "NON_REPORTING": 39,
+        "IN_APPROVAL": 1359,
+        "AUTHORIZED": 71,
+        "RELEASED": 475,
+        "APPROVED": 9
+      }
+    },
+    "July 2026|Essential Medicine": {
+      "sheet": "Jul EM",
+      "expected": 3381,
+      "statuses": {
+        "NON_REPORTING": 54,
+        "IN_APPROVAL": 2082,
+        "RELEASED": 1086,
+        "AUTHORIZED": 139,
+        "APPROVED": 17,
+        "RELEASED_NO_ORDER": 3
+      }
+    },
+    "July 2026|Laboratory Commodities": {
+      "sheet": "Jul LAB",
+      "expected": 639,
+      "statuses": {
+        "NON_REPORTING": 38,
+        "IN_APPROVAL": 386,
+        "RELEASED": 200,
+        "APPROVED": 5,
+        "AUTHORIZED": 10
+      }
+    },
+    "August 2026|Antiretroviral Drugs": {
+      "sheet": "Aug ARV",
+      "expected": 1953,
+      "statuses": {
+        "NON_REPORTING": 49,
+        "RELEASED": 572,
+        "IN_APPROVAL": 1224,
+        "AUTHORIZED": 94,
+        "APPROVED": 14
+      }
+    },
+    "August 2026|Essential Medicine": {
+      "sheet": "Aug EM",
+      "expected": 3381,
+      "statuses": {
+        "NON_REPORTING": 63,
+        "RELEASED": 1347,
+        "IN_APPROVAL": 1809,
+        "AUTHORIZED": 158,
+        "APPROVED": 4
+      }
+    },
+    "August 2026|Laboratory Commodities": {
+      "sheet": "Aug LAB",
+      "expected": 639,
+      "statuses": {
+        "NON_REPORTING": 41,
+        "RELEASED": 419,
+        "AUTHORIZED": 32,
+        "IN_APPROVAL": 146,
+        "APPROVED": 1
+      }
+    },
+    "September 2026|Antiretroviral Drugs": {
+      "sheet": "Sep ARV",
+      "expected": 1953,
+      "statuses": {
+        "NON_REPORTING": 201,
+        "IN_APPROVAL": 825,
+        "AUTHORIZED": 891,
+        "RELEASED": 31,
+        "APPROVED": 5
+      }
+    },
+    "September 2026|Essential Medicine": {
+      "sheet": "Sep EM",
+      "expected": 3381,
+      "statuses": {
+        "NON_REPORTING": 383,
+        "IN_APPROVAL": 1122,
+        "AUTHORIZED": 1757,
+        "RELEASED": 82,
+        "APPROVED": 37
+      }
+    },
+    "September 2026|Laboratory Commodities": {
+      "sheet": "Sep LAB",
+      "expected": 639,
+      "statuses": {
+        "NON_REPORTING": 85,
+        "IN_APPROVAL": 409,
+        "AUTHORIZED": 142,
+        "RELEASED": 1,
+        "APPROVED": 2
+      }
+    }
+  },
+  "records": 53757,
+  "snapshotChanges": {
+    "January 2026|Antiretroviral Drugs": {
+      "previousNonReporting": 49,
+      "currentNonReporting": 49
+    },
+    "January 2026|Essential Medicine": {
+      "previousNonReporting": 70,
+      "currentNonReporting": 70
+    },
+    "January 2026|Laboratory Commodities": {
+      "previousNonReporting": 0,
+      "currentNonReporting": 34
+    },
+    "February 2026|Antiretroviral Drugs": {
+      "previousNonReporting": 59,
+      "currentNonReporting": 59
+    },
+    "February 2026|Essential Medicine": {
+      "previousNonReporting": 85,
+      "currentNonReporting": 85
+    },
+    "February 2026|Laboratory Commodities": {
+      "previousNonReporting": 0,
+      "currentNonReporting": 39
+    },
+    "March 2026|Antiretroviral Drugs": {
+      "previousNonReporting": 46,
+      "currentNonReporting": 46
+    },
+    "March 2026|Essential Medicine": {
+      "previousNonReporting": 57,
+      "currentNonReporting": 57
+    },
+    "March 2026|Laboratory Commodities": {
+      "previousNonReporting": 0,
+      "currentNonReporting": 35
+    },
+    "April 2026|Antiretroviral Drugs": {
+      "previousNonReporting": 47,
+      "currentNonReporting": 47
+    },
+    "April 2026|Essential Medicine": {
+      "previousNonReporting": 55,
+      "currentNonReporting": 55
+    },
+    "April 2026|Laboratory Commodities": {
+      "previousNonReporting": 0,
+      "currentNonReporting": 34
+    },
+    "May 2026|Antiretroviral Drugs": {
+      "previousNonReporting": 48,
+      "currentNonReporting": 48
+    },
+    "May 2026|Essential Medicine": {
+      "previousNonReporting": 58,
+      "currentNonReporting": 58
+    },
+    "May 2026|Laboratory Commodities": {
+      "previousNonReporting": 0,
+      "currentNonReporting": 37
+    },
+    "June 2026|Antiretroviral Drugs": {
+      "previousNonReporting": 34,
+      "currentNonReporting": 34
+    },
+    "June 2026|Essential Medicine": {
+      "previousNonReporting": 44,
+      "currentNonReporting": 44
+    },
+    "June 2026|Laboratory Commodities": {
+      "previousNonReporting": 0,
+      "currentNonReporting": 35
+    },
+    "July 2026|Antiretroviral Drugs": {
+      "previousNonReporting": 40,
+      "currentNonReporting": 39
+    },
+    "July 2026|Essential Medicine": {
+      "previousNonReporting": 54,
+      "currentNonReporting": 54
+    },
+    "July 2026|Laboratory Commodities": {
+      "previousNonReporting": 0,
+      "currentNonReporting": 38
+    },
+    "August 2026|Antiretroviral Drugs": {
+      "previousNonReporting": 52,
+      "currentNonReporting": 49
+    },
+    "August 2026|Essential Medicine": {
+      "previousNonReporting": 67,
+      "currentNonReporting": 63
+    },
+    "August 2026|Laboratory Commodities": {
+      "previousNonReporting": 0,
+      "currentNonReporting": 41
+    },
+    "September 2026|Antiretroviral Drugs": {
+      "previousNonReporting": 251,
+      "currentNonReporting": 201
+    },
+    "September 2026|Essential Medicine": {
+      "previousNonReporting": 480,
+      "currentNonReporting": 383
+    },
+    "September 2026|Laboratory Commodities": {
+      "previousNonReporting": 0,
+      "currentNonReporting": 85
+    }
+  },
+  "septemberSourceDifferences": [
+    {
+      "program": "Antiretroviral Drugs",
+      "statusExpected": 1953,
+      "statusNonReporting": 201,
+      "timelinessExpected": 1948,
+      "timelinessMissing": 251
+    },
+    {
+      "program": "Essential Medicine",
+      "statusExpected": 3381,
+      "statusNonReporting": 383,
+      "timelinessExpected": 3381,
+      "timelinessMissing": 506
+    },
+    {
+      "program": "Laboratory Commodities",
+      "statusExpected": 639,
+      "statusNonReporting": 85,
+      "timelinessExpected": 627,
+      "timelinessMissing": 94
+    }
+  ],
+  "laboratoryTimeliness": {
+    "districtRows": 109,
+    "expected": 627,
+    "reportedOnTime": 533,
+    "reportedLate": 0
+  }
+}
