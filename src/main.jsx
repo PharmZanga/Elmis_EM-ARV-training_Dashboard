@@ -228,7 +228,7 @@ function DashboardApp() {
                 <span>{label}</span>
               </button>;
             })}
-            <div className="nav-footer"><span className="live-dot" />National supply chain<span>Zambia · Ministry of Health</span></div>
+            <div className="nav-footer"><strong>&copy; 2026 Zanga Musakuzi</strong><span>Principal Pharmacist</span><span><strong>National Supply Chain Control Unit (Control Tower)</strong></span></div>
           </nav>
         </aside>
 
