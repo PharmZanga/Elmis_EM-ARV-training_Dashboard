@@ -171,3 +171,32 @@
 .control-tower .brand-side { align-items: center; min-width: 0; }
 .control-tower .brand-side > div:last-child { min-width: 0; }
 .control-tower .tower-brand { flex-shrink: 0; }
+
+/* Soft surfaces and a continuous photo-backed navigation shell. */
+:root { --bg: #e7f1e9; --surface: #f0f7f1; --line: #cfdfd2; --tower-photo: linear-gradient(90deg, rgba(4, 38, 30, .9), rgba(6, 58, 46, .68), rgba(4, 38, 30, .84)), url("https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=1800&q=80"); }
+.control-tower { --line: #cfdfd2; background: var(--bg); }
+.control-tower .masthead { background-image: var(--tower-photo); }
+.control-tower .sidebar { background: var(--tower-photo) center / cover !important; border-right-color: #285e4b; }
+.control-tower .side-menu { background: transparent; }
+.control-tower .side-menu > button { color: #e1f0e7; background: transparent; }
+.control-tower .side-menu > button:hover { background: #ffffff18; color: #fff; }
+.control-tower .side-menu > button.active { background: #ffffff24; color: #fff; border-color: #ffffff38; }
+.control-tower .nav-caption, .control-tower .nav-footer { color: #c3dfce; }
+.control-tower .nav-footer { border-top-color: #ffffff30; }
+.control-tower .nav-caption .icon-button { color: #d5ecdf; background: transparent; }
+.control-tower .nav-caption .icon-button:hover { background: #ffffff18; color: #fff; }
+.control-tower .side-menu .live-dot { background: #8ed4ac; }
+.control-tower .kpi, .control-tower .panel, .control-tower .page-filters,
+.control-tower .filter-card select, .control-tower .icon-button,
+.control-tower .photo-card, .control-tower .support-contact-card-safe,
+.control-tower .action-status-select, .control-tower .action-note-input { background: var(--surface); }
+.control-tower .help-desk-flow, .control-tower .help-desk-directory,
+.control-tower .updates-gallery, .control-tower .contact-card { background: var(--surface) !important; }
+.control-tower th, .detail-page th { background: #dcebdd; color: #385643; }
+.control-tower tbody tr:nth-child(even), .detail-page tbody tr:nth-child(even) { background: #e5f0e7; }
+.control-tower .insight-strip { background: #dfece2; }
+.control-tower .donut::after { background: var(--surface); }
+.detail-page, .detail-search { background: var(--bg); }
+.detail-table-wrap, .detail-search input, .detail-pagination button { background: var(--surface); }
+.detail-header { background: var(--tower-photo) center / cover; }
+@media print { body, .control-tower, .control-tower .panel, .control-tower .kpi, .detail-page, .detail-print-table { background: #fff !important; } }
