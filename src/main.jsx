@@ -239,7 +239,7 @@ function DashboardApp() {
               <div className="training-date-note" role="status">
                 <span>Facility reporting uses the January-September 2026 status snapshot. Timeliness uses separate district totals.</span>
                 {!filteredTimeliness.length && <span>Timeliness data was not supplied for this selection.</span>}
-                {filteredTimeliness.length > 0 && selectedPeriod !== "September 2026" && selectedProgram === "All" && <span>Timeliness covers EM and ARV only; Laboratory timeliness was not supplied for this month.</span>}
+                {filteredTimeliness.length > 0 && selectedProgram === "All" && <span>Timeliness coverage for this selection: {unique(filteredTimeliness.map(row => reportingSeries.find(series => series.key === row.program)?.label || row.program)).join(", ")}. Only supplied district totals are included.</span>}
                 {selectedPeriod === "September 2026" && <span>September reporting status and timeliness snapshots have different expected and missing-report totals.</span>}
               </div>
             )}
@@ -371,7 +371,7 @@ function ExecutivePage({ totals, statusRows, participants, districtBars, provinc
     <>
       <KpiGrid items={[
         { label: "Reporting Rate", value: percent(totals.reportingRate), title: "Reporting Rate Details", rows: totals.reportingDetails, columns: ["province", "district", "facility", "program", "expected", "reported", "status", "reportingRate"] },
-        { label: "Timeliness", value: percent(totals.timeliness), title: "Reporting Timeliness Details", rows: totals.timelinessDetails, columns: ["province", "district", "program", "expected", "reportedOnTime", "reportedLate", "timeliness"] },
+        { label: "Timeliness", value: percent(totals.timeliness), meta: unique(totals.timelinessDetails.map(row => reportingSeries.find(series => series.key === row.program)?.label || row.program)).join(" / ") || "No supplied district totals", title: "Reporting Timeliness Details", rows: totals.timelinessDetails, columns: ["province", "district", "program", "expected", "reportedOnTime", "reportedLate", "timeliness"] },
         { label: "Trained eLMIS Personnel", value: participants.length, title: "Trained eLMIS Personnel", rows: participants, columns: ["province", "district", "facility", "firstName", "lastName", "profession", "role"] },
         { label: "Non-Reporting Facilities", value: totals.nonReportingFacilities, title: "Non-Reporting Facilities", rows: statusRows.filter((row) => row.status === "NON_REPORTING"), columns: ["province", "district", "facility", "program", "status"] },
         { label: "Late Follow-ups", value: totals.timelinessDetails.length ? followUps.lateDistricts.length : "N/A", title: "Late Reporting Follow-ups", rows: followUps.lateDistricts, columns: ["province", "district", "program", "reportedLate", "timeliness", "task"] },
@@ -466,7 +466,7 @@ function KpiPage({ totals, previousReporting, statusRows, districtBars, submissi
     {
       label: "Timeliness",
       value: percent(totals.timeliness),
-      meta: "On-time / expected district reports",
+      meta: `${unique(totals.timelinessDetails.map(row => reportingSeries.find(series => series.key === row.program)?.label || row.program)).join(" / ") || "No data"} · On-time / expected district reports`,
       title: "Reporting Timeliness Full Details",
       rows: totals.timelinessDetails,
       columns: ["province", "district", "program", "expected", "reportedOnTime", "reportedLate", "timeliness"],
