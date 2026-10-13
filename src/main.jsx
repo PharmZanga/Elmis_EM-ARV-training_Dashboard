@@ -6,6 +6,8 @@ import { percent, count, reportingMetrics, groupedReportingMetrics } from "./rep
 import "./styles.css";
 import { LayoutDashboard, FileBarChart, Network, ListTodo, GraduationCap, Headphones, Newspaper, PanelLeftClose, PanelLeftOpen, Menu, X, RotateCcw, ArrowUpRight, ArrowDownRight, ExternalLink, Info, Building2, Clock3, Users, CircleAlert, MapPin, ChartNoAxesCombined } from "lucide-react";
 import "./controlTower.css";
+import ManagementInsights from "./ManagementInsights.jsx";
+import { missingHistory } from "./managementMetrics.js";
 
 const { participants, reportingRows, timelinessRows, facilityMetadata = [], reportingUpdate = {} } = dashboardData;
 const reportingSeries = [
@@ -159,6 +161,13 @@ function DashboardApp() {
     ? groupedReportingMetrics(filteredReporting, filteredTimeliness, "province", true)
     : provincePerformance(filteredReporting), [filteredReporting, filteredTimeliness, partialReporting]);
   const followUps = useMemo(() => taskFollowUps(statusRows, filteredTimeliness), [statusRows, filteredTimeliness]);
+  const history = useMemo(() => missingHistory(reportingRows, { period: selectedPeriod, program: selectedProgram, province: selectedProvince, district: selectedDistrict, fullPeriods: reportingUpdate.fullReportingPeriods || [] }), [selectedPeriod, selectedProgram, selectedProvince, selectedDistrict]);
+  const openManagementFollowUp = row => {
+    setSelectedProvince(row.province);
+    setSelectedDistrict(row.district);
+    if (row.program) setSelectedProgram(row.program);
+    setActivePage("tasks");
+  };
   const provinceCards = useMemo(() => provinceTrainingPerformance(provinceTicker, filteredParticipants), [provinceTicker, filteredParticipants]);
   const monthlyTrends = useMemo(() => monthlyProgramTrends(reportingRows, selectedProvince, selectedDistrict, selectedProgram, selectedPeriod), [selectedProvince, selectedDistrict, selectedProgram, selectedPeriod]);
   const insights = useMemo(() => buildInsights(provinceTicker, statusRows, filteredParticipants, selectedProgram), [provinceTicker, statusRows, filteredParticipants, selectedProgram]);
@@ -253,9 +262,9 @@ function DashboardApp() {
             </details>
           </>}
           {activePage === "executive" && <ExecutivePage totals={totals} statusRows={statusRows} participants={filteredParticipants} districtBars={districtBars} provinceTicker={provinceTicker} followUps={followUps} provinceCards={provinceCards} monthlyTrends={monthlyTrends} insights={insights} priorityRows={priorityRows} />}
-          {activePage === "reports" && <KpiPage totals={totals} previousReporting={previousReporting} statusRows={statusRows} districtBars={districtBars} submissionTrend={submissionTrend} provinceTicker={provinceTicker} provinceCards={provinceCards} monthlyTrends={monthlyTrends} insights={insights} />}
+          {activePage === "reports" && <KpiPage totals={totals} previousReporting={previousReporting} statusRows={statusRows} districtBars={districtBars} submissionTrend={submissionTrend} provinceTicker={provinceTicker} provinceCards={provinceCards} monthlyTrends={monthlyTrends} insights={insights} history={history} selectedProgram={selectedProgram} period={selectedPeriod} onFollowUp={openManagementFollowUp} />}
           {activePage === "training" && <TrainingPage totals={totals} participants={filteredParticipants} facilityKpis={statusRows} />}
-          {activePage === "tasks" && <TaskPage totals={totals} statusRows={statusRows} followUps={followUps} provinceTicker={provinceTicker} priorityRows={priorityRows} insights={insights} />}
+          {activePage === "tasks" && <TaskPage totals={totals} statusRows={statusRows} followUps={followUps} provinceTicker={provinceTicker} priorityRows={priorityRows} insights={insights} history={history} />}
           {activePage === "trainings" && <TrainingsPage totals={totals} participants={filteredParticipants} provinceCards={provinceCards} />}
           {activePage === "helpdesk" && <HelpDeskPage />}
           {activePage === "updates" && <LatestUpdatesPage />}
@@ -426,7 +435,7 @@ function ExecutivePage({ totals, statusRows, participants, districtBars, provinc
   );
 }
 
-function KpiPage({ totals, previousReporting, statusRows, districtBars, submissionTrend, provinceTicker, provinceCards, monthlyTrends, insights }) {
+function KpiPage({ totals, previousReporting, statusRows, districtBars, submissionTrend, provinceTicker, provinceCards, monthlyTrends, insights, history, selectedProgram, period, onFollowUp }) {
   const [view, setView] = useState("overview");
   const facilityStatusRows = uniqueFacilityStatusRows(statusRows);
   const reportedRows = facilityStatusRows.filter((row) => row.status === "REPORTING");
@@ -488,6 +497,7 @@ function KpiPage({ totals, previousReporting, statusRows, districtBars, submissi
       <div className="view-tabs" role="tablist" aria-label="Reporting views">
         <button role="tab" aria-selected={view === "overview"} onClick={() => setView("overview")}>Performance overview</button>
         <button role="tab" aria-selected={view === "register"} onClick={() => setView("register")}>Facility register <span>{statusRows.length.toLocaleString()}</span></button>
+        <button role="tab" aria-selected={view === "management"} onClick={() => setView("management")}>Management insights</button>
       </div>
       {view === "register" && <section className="register-grid">
         <Panel title={statusRows.some((row) => row.nonReportingOnly) ? "Named Non-Reporting Facilities" : "Reporting Rate by Facility"} detailRows={statusRows} detailColumns={["province", "district", "facility", "program", "reportingRate", "status"]}><DataTable rows={statusRows} columns={["district", "facility", "program", "reportingRate"]} total={percent(totals.reportingRate)} /></Panel>
@@ -501,6 +511,7 @@ function KpiPage({ totals, previousReporting, statusRows, districtBars, submissi
       </section>
       <ProvinceTicker values={provinceTicker} />
       </>}
+      {view === "management" && <ManagementInsights timelyRows={totals.timelinessDetails} history={history} selectedProgram={selectedProgram} period={period} Panel={Panel} onFollowUp={onFollowUp} />}
       <section className="map-trend-row">
         <Panel title="Zambia Provincial Performance" className="map-panel" detailRows={provinceCards} detailColumns={["province", "reportingRate", "reporting", "expected", "training"]}><ProvincePerformanceMap values={provinceCards} /></Panel>
         <Panel title="Monthly EM, ARV and Laboratory Reporting Trends" detailRows={monthlyTrends} detailColumns={["label", ...reportingSeries.filter((series) => monthlyTrends.some((row) => series.key in row)).map((series) => series.key)]}><MonthlyTrendChart values={monthlyTrends} /></Panel>
@@ -509,7 +520,7 @@ function KpiPage({ totals, previousReporting, statusRows, districtBars, submissi
   );
 }
 
-function TaskPage({ totals, statusRows, followUps, provinceTicker, priorityRows, insights }) {
+function TaskPage({ totals, statusRows, followUps, provinceTicker, priorityRows, insights, history }) {
   return (
     <>
       <KpiGrid items={[
@@ -523,6 +534,7 @@ function TaskPage({ totals, statusRows, followUps, provinceTicker, priorityRows,
       <ProvinceTicker values={provinceTicker} />
 
       <section className="task-action-layout">
+        <ActionTrackerPanel title="Repeat reporting gaps" rows={history.pairs.filter(row => row.monthsMissed >= 2).map(row => ({ ...row, status: "Open" }))} columns={["province", "district", "facility", "program", "monthsMissed", "missedMonths", "currentStatus", "task"]} getId={row => `repeat-${row.facilityCode || row.facility}-${row.program}-${row.period}`} />
         <ActionTrackerPanel
           title="Priority Actions"
           rows={priorityRows}

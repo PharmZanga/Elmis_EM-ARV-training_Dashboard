@@ -200,3 +200,46 @@
 .detail-table-wrap, .detail-search input, .detail-pagination button { background: var(--surface); }
 .detail-header { background: var(--tower-photo) center / cover; }
 @media print { body, .control-tower, .control-tower .panel, .control-tower .kpi, .detail-page, .detail-print-table { background: #fff !important; } }
+.management-insights { display: grid; gap: 20px; }
+.management-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 20px; }
+.program-comparison { padding: 18px; display: grid; gap: 22px; }
+.program-comparison-row { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 8px 14px; align-items: center; }
+.program-comparison-row > div:first-child { display: grid; gap: 5px; font-size: 13px; }
+.program-comparison-row span, .analysis-context { font-size: 11px; color: #526e5d; line-height: 1.6; }
+.program-comparison-row > b { font-size: 22px; color: #214734; }
+.program-comparison-row > .timely-status-bar { grid-column: 1 / -1; }
+.timely-status-bar { display: flex; height: 9px; border-radius: 3px; overflow: hidden; min-width: 0; background: #c9d3cc; }
+.timely-status-bar i { display: block; height: 100%; }
+.status-ontime { background: #27835c; }
+.status-late { background: #c58c1d; }
+.status-other { background: #a7b5ac; }
+.timely-status-legend { display: flex; gap: 14px; flex-wrap: wrap; padding: 10px 18px 18px; font-size: 11px; color: #526e5d; }
+.timely-status-legend span { display: flex; align-items: center; gap: 5px; }
+.timely-status-legend i { width: 9px; height: 9px; border-radius: 2px; }
+.province-timely-ranks { display: grid; gap: 15px; padding: 20px 18px 10px; }
+.province-timely-ranks > div { display: grid; grid-template-columns: 96px minmax(20px,1fr) 48px; gap: 12px; align-items: center; font-size: 12px; }
+.province-timely-ranks b { text-align: right; font-size: 11px; }
+.district-priority-list { padding: 4px 18px; }
+.district-priority-list > div { display: grid; grid-template-columns: minmax(0,1fr) 50px 32px; gap: 8px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.district-priority-list strong { font-size: 12px; font-weight: 600; }
+.district-priority-list small, .repeat-table td small { display: block; margin-top: 4px; font-size: 11px; color: #526e5d; }
+.district-priority-list b { font-size: 12px; text-align: right; }
+.district-priority-list .timely-status-bar { grid-column: 1 / -1; height: 5px; }
+.counting-modes { display: flex; gap: 4px; flex-wrap: wrap; padding: 18px 18px 0; }
+.counting-modes button { padding: 7px 9px; border: 1px solid #c5d8ca; background: transparent; color: #365d46; border-radius: 4px; font-size: 11px; cursor: pointer; }
+.counting-modes button[aria-pressed="true"] { background: #d8eadd; border-color: #669578; font-weight: 600; }
+.management-insights p.analysis-context { margin: 12px 18px; }
+.count-summary { padding: 4px 18px 18px; display: grid; gap: 4px; }
+.count-summary strong { font-size: 28px; color: #214734; }
+.count-summary span { font-size: 12px; color: #526e5d; }
+.facility-type-bars { padding: 0 18px 20px; display: grid; gap: 15px; }
+.facility-type-bars > div { display: grid; grid-template-columns: 125px minmax(20px,1fr) 44px; gap: 10px; align-items: center; font-size: 11px; }
+.facility-type-bars > div > div { height: 6px; background: #dce8df; }
+.facility-type-bars i { height: 100%; display: block; background: #597e9a; }
+.facility-type-bars b { text-align: right; }
+.repeat-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; gap: 16px; }
+.repeat-toolbar label { display: flex; align-items: center; gap: 8px; font-size: 12px; white-space: nowrap; }
+.repeat-toolbar select { background: var(--surface); border: 1px solid var(--line); padding: 6px; border-radius: 4px; }
+.control-tower .repeat-table { max-height: 430px; }
+.repeat-outstanding { color: #9d4938; font-weight: 600; }
+@media (max-width: 650px) { .management-grid { grid-template-columns: minmax(0,1fr); } .view-tabs { gap: 14px; overflow-x: auto; } .view-tabs button { flex: 0 0 auto; } .repeat-toolbar { align-items: flex-start; flex-direction: column; } .province-timely-ranks > div { gap: 8px; grid-template-columns: 90px minmax(20px,1fr) 44px; } }
