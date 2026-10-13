@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { dashboardData } from "./dashboardData.js";
 import { linkTrainingToFacilities } from "./trainingLinkages.js";
@@ -58,14 +58,20 @@ function App() {
     window.addEventListener("hashchange", syncDetailPayload);
     const openRecords = event => openDetailWindow(event.detail.title, event.detail.rows, Object.keys(event.detail.rows[0] || {}));
     window.addEventListener("elmis:detail", openRecords);
+    const openPopup = event => setDetailPayload(event.detail);
+    window.addEventListener("elmis:popup", openPopup);
     return () => {
       window.removeEventListener("hashchange", syncDetailPayload);
       window.removeEventListener("elmis:detail", openRecords);
+      window.removeEventListener("elmis:popup", openPopup);
     };
   }, []);
 
-  if (detailPayload) return <DetailPage payload={detailPayload} />;
-  return <DashboardApp />;
+  const closeDetails = useCallback(() => {
+    setDetailPayload(null);
+    if (window.location.hash.startsWith("#detail=")) window.history.replaceState(null, "", window.location.pathname + window.location.search);
+  }, []);
+  return <><div className="dashboard-surface" inert={detailPayload ? true : undefined} aria-hidden={detailPayload ? true : undefined}><DashboardApp /></div>{detailPayload && <DetailModal payload={detailPayload} onClose={closeDetails} />}</>;
 }
 
 function DashboardApp() {
@@ -169,6 +175,14 @@ function DashboardApp() {
     setActivePage("tasks");
   };
   const provinceCards = useMemo(() => provinceTrainingPerformance(provinceTicker, filteredParticipants), [provinceTicker, filteredParticipants]);
+  const mapProvinceCards = useMemo(() => {
+    const nationalRows = reportingRows.filter(row => matchesFilters(row, selectedPeriod, selectedProgram, "All", "All"));
+    const nationalTimely = timelinessRows.filter(row => matchesFilters(row, selectedPeriod, selectedProgram, "All", "All"));
+    const stats = partialReporting ? groupedReportingMetrics(nationalRows, nationalTimely, "province", true) : provincePerformance(nationalRows);
+    const trainees = participants.filter(person => { const date = parseTrainingDate(person.startDate); return date && date <= getPeriodEnd(selectedPeriod); });
+    return provinceTrainingPerformance(stats, trainees);
+  }, [selectedPeriod, selectedProgram, partialReporting]);
+  const selectMapProvince = useCallback(province => { setSelectedProvince(province); setSelectedDistrict("All"); }, []);
   const monthlyTrends = useMemo(() => monthlyProgramTrends(reportingRows, selectedProvince, selectedDistrict, selectedProgram, selectedPeriod), [selectedProvince, selectedDistrict, selectedProgram, selectedPeriod]);
   const insights = useMemo(() => buildInsights(provinceTicker, statusRows, filteredParticipants, selectedProgram), [provinceTicker, statusRows, filteredParticipants, selectedProgram]);
   const priorityRows = useMemo(() => priorityActions(followUps, provinceTicker, filteredParticipants), [followUps, provinceTicker, filteredParticipants]);
@@ -261,8 +275,8 @@ function DashboardApp() {
             )}
             </details>
           </>}
-          {activePage === "executive" && <ExecutivePage totals={totals} statusRows={statusRows} participants={filteredParticipants} districtBars={districtBars} provinceTicker={provinceTicker} followUps={followUps} provinceCards={provinceCards} monthlyTrends={monthlyTrends} insights={insights} priorityRows={priorityRows} />}
-          {activePage === "reports" && <KpiPage totals={totals} previousReporting={previousReporting} statusRows={statusRows} districtBars={districtBars} submissionTrend={submissionTrend} provinceTicker={provinceTicker} provinceCards={provinceCards} monthlyTrends={monthlyTrends} insights={insights} history={history} selectedProgram={selectedProgram} period={selectedPeriod} onFollowUp={openManagementFollowUp} />}
+          {activePage === "executive" && <ExecutivePage totals={totals} statusRows={statusRows} participants={filteredParticipants} districtBars={districtBars} provinceTicker={provinceTicker} followUps={followUps} provinceCards={provinceCards} mapProvinceCards={mapProvinceCards} selectedProvince={selectedProvince} onProvinceSelect={selectMapProvince} monthlyTrends={monthlyTrends} insights={insights} priorityRows={priorityRows} />}
+          {activePage === "reports" && <KpiPage totals={totals} previousReporting={previousReporting} statusRows={statusRows} districtBars={districtBars} submissionTrend={submissionTrend} provinceTicker={provinceTicker} provinceCards={provinceCards} mapProvinceCards={mapProvinceCards} selectedProvince={selectedProvince} onProvinceSelect={selectMapProvince} monthlyTrends={monthlyTrends} insights={insights} history={history} selectedProgram={selectedProgram} period={selectedPeriod} onFollowUp={openManagementFollowUp} />}
           {activePage === "training" && <TrainingPage totals={totals} participants={filteredParticipants} facilityKpis={statusRows} />}
           {activePage === "tasks" && <TaskPage totals={totals} statusRows={statusRows} followUps={followUps} provinceTicker={provinceTicker} priorityRows={priorityRows} insights={insights} history={history} />}
           {activePage === "trainings" && <TrainingsPage totals={totals} participants={filteredParticipants} provinceCards={provinceCards} />}
@@ -367,7 +381,7 @@ function uniqueFacilityStatusRows(rows) {
   });
 }
 
-function ExecutivePage({ totals, statusRows, participants, districtBars, provinceTicker, followUps, provinceCards, monthlyTrends, insights, priorityRows }) {
+function ExecutivePage({ totals, statusRows, participants, districtBars, provinceTicker, followUps, provinceCards, mapProvinceCards, selectedProvince, onProvinceSelect, monthlyTrends, insights, priorityRows }) {
   const [executiveTab, setExecutiveTab] = useState("overview");
   const professionCounts = countBy(participants, "profession");
   const trainingByRole = [
@@ -417,9 +431,9 @@ function ExecutivePage({ totals, statusRows, participants, districtBars, provinc
               <p>By bringing reporting and training indicators into one platform, the dashboard strengthens accountability, data visibility and targeted support for reliable logistics information and continuous availability of essential medicines and antiretroviral commodities.</p>
             </div>
           </details>
-          <Panel title="Zambia Provincial Performance" className="map-panel" detailRows={provinceCards} detailColumns={["province", "reportingRate", "reporting", "expected", "training"]}><ProvincePerformanceMap values={provinceCards} /></Panel>
+          <Panel title="Zambia Provincial Performance" className="map-panel" detailRows={mapProvinceCards} detailColumns={["province", "reportingRate", "reporting", "expected", "training"]}><ProvincePerformanceMap values={mapProvinceCards} selectedProvince={selectedProvince} onProvinceSelect={onProvinceSelect} /></Panel>
           <Panel title="Priority Actions" className="priority-panel"><PriorityActionList rows={priorityRows} /></Panel>
-          <Panel title="Top Reporting Districts"><BarChart values={districtBars.slice(0, 8)} max={100} suffix="%" /></Panel>
+          <Panel title={selectedProvince === "All" ? "Top Reporting Districts" : `Top Reporting Districts · ${selectedProvince}`}><BarChart values={districtBars.slice(0, 8)} max={100} suffix="%" /></Panel>
           <Panel title="Training Role Mix"><BarChart values={trainingByRole} max={Math.max(...trainingByRole.map((item) => item.value), 1)} /></Panel>
         </section>
       )}
@@ -435,7 +449,7 @@ function ExecutivePage({ totals, statusRows, participants, districtBars, provinc
   );
 }
 
-function KpiPage({ totals, previousReporting, statusRows, districtBars, submissionTrend, provinceTicker, provinceCards, monthlyTrends, insights, history, selectedProgram, period, onFollowUp }) {
+function KpiPage({ totals, previousReporting, statusRows, districtBars, submissionTrend, provinceTicker, provinceCards, mapProvinceCards, selectedProvince, onProvinceSelect, monthlyTrends, insights, history, selectedProgram, period, onFollowUp }) {
   const [view, setView] = useState("overview");
   const facilityStatusRows = uniqueFacilityStatusRows(statusRows);
   const reportedRows = facilityStatusRows.filter((row) => row.status === "REPORTING");
@@ -513,7 +527,7 @@ function KpiPage({ totals, previousReporting, statusRows, districtBars, submissi
       </>}
       {view === "management" && <ManagementInsights timelyRows={totals.timelinessDetails} history={history} selectedProgram={selectedProgram} period={period} Panel={Panel} onFollowUp={onFollowUp} />}
       <section className="map-trend-row">
-        <Panel title="Zambia Provincial Performance" className="map-panel" detailRows={provinceCards} detailColumns={["province", "reportingRate", "reporting", "expected", "training"]}><ProvincePerformanceMap values={provinceCards} /></Panel>
+        <Panel title="Zambia Provincial Performance" className="map-panel" detailRows={mapProvinceCards} detailColumns={["province", "reportingRate", "reporting", "expected", "training"]}><ProvincePerformanceMap values={mapProvinceCards} selectedProvince={selectedProvince} onProvinceSelect={onProvinceSelect} /></Panel>
         <Panel title="Monthly EM, ARV and Laboratory Reporting Trends" detailRows={monthlyTrends} detailColumns={["label", ...reportingSeries.filter((series) => monthlyTrends.some((row) => series.key in row)).map((series) => series.key)]}><MonthlyTrendChart values={monthlyTrends} /></Panel>
       </section>
     </>
@@ -1269,21 +1283,31 @@ function ProvincePerformanceCards({ values }) {
   );
 }
 
-function ProvincePerformanceMap({ values }) {
+function ProvincePerformanceMap({ values, selectedProvince = "All", onProvinceSelect }) {
   const mapRef = useRef(null);
   const [mapStatus, setMapStatus] = useState("loading");
 
   useEffect(() => {
     let cancelled = false;
+    let chart;
     loadGoogleGeoChart()
       .then(() => {
         if (cancelled || !mapRef.current) return;
         const google = window.google;
         const data = google.visualization.arrayToDataTable([
           ["Province", "Reporting Rate"],
-          ...values.map((item) => [googleProvinceName(item.province), Number.isFinite(item.reportingRate) ? Number(item.reportingRate.toFixed(1)) : null]),
+          ...values.map((item) => [{ v: googleProvinceCode(item.province), f: item.province }, { v: selectedProvince === "All" ? (Number.isFinite(item.reportingRate) ? Number(item.reportingRate.toFixed(1)) : null) : (item.province === selectedProvince ? 100 : 0), f: percent(item.reportingRate) }]),
         ]);
-        const chart = new google.visualization.GeoChart(mapRef.current);
+        chart = new google.visualization.GeoChart(mapRef.current);
+        google.visualization.events.addListener(chart, "ready", () => {
+          if (cancelled) return;
+          const row = values.findIndex(item => item.province === selectedProvince);
+          chart.setSelection(row >= 0 ? [{ row }] : []);
+        });
+        google.visualization.events.addListener(chart, "select", () => {
+          const row = chart.getSelection()[0]?.row;
+          if (Number.isInteger(row) && values[row]) onProvinceSelect?.(values[row].province);
+        });
         chart.draw(data, {
           region: "ZM",
           resolution: "provinces",
@@ -1291,7 +1315,7 @@ function ProvincePerformanceMap({ values }) {
           backgroundColor: "transparent",
           datalessRegionColor: "#e6ece9",
           defaultColor: "#e6ece9",
-          colorAxis: {
+          colorAxis: selectedProvince !== "All" ? { minValue: 0, maxValue: 100, colors: ["#d1dfd5", "#147a46"] } : {
             minValue: 80,
             maxValue: 100,
             colors: ["#b42318", "#a96e00", "#147a46"],
@@ -1308,32 +1332,39 @@ function ProvincePerformanceMap({ values }) {
       });
     return () => {
       cancelled = true;
+      if (chart) {
+        window.google.visualization.events.removeAllListeners(chart);
+        chart.clearChart();
+      }
     };
-  }, [values]);
+  }, [values, selectedProvince, onProvinceSelect]);
 
   return (
     <div className="zambia-map-wrap">
+      <div className="province-selection"><strong>{selectedProvince === "All" ? "All provinces" : selectedProvince}</strong>{selectedProvince !== "All" && <button type="button" onClick={() => onProvinceSelect?.("All")}>All provinces</button>}</div>
       <div ref={mapRef} className="google-zambia-map" aria-label="Google map of Zambia provincial reporting performance" />
       {mapStatus === "loading" && <div className="map-message">Loading Google map...</div>}
       {mapStatus === "error" && <div className="map-message">Google map could not load. Check internet access and refresh the page.</div>}
-      <ProvinceMapLabels values={values} />
+      <ProvinceMapLabels values={values} selectedProvince={selectedProvince} onProvinceSelect={onProvinceSelect} />
       <div className="map-legend">
+        {selectedProvince !== "All" ? <><span><i className="good" />Selected province</span><span><i style={{ background: "#d1dfd5" }} />Other provinces</span></> : <>
         <span><i className="good" />95%+</span>
         <span><i className="watch" />90-94%</span>
         <span><i className="risk" />Below 90%</span>
+        </>}
       </div>
     </div>
   );
 }
 
-function ProvinceMapLabels({ values }) {
+function ProvinceMapLabels({ values, selectedProvince, onProvinceSelect }) {
   return (
     <div className="map-label-grid">
       {values.map((item) => (
-        <span key={item.province}>
+        <button type="button" key={item.province} aria-label={`Select ${item.province} province`} aria-pressed={selectedProvince === item.province} onClick={() => onProvinceSelect?.(item.province)}>
           <b>{item.province}</b>
           <em>{percent(item.reportingRate)}</em>
-        </span>
+        </button>
       ))}
     </div>
   );
@@ -1389,7 +1420,40 @@ function DataTable({ rows, columns, total }) {
   );
 }
 
-function DetailPage({ payload }) {
+function DetailModal({ payload, onClose }) {
+  const dialogRef = useRef(null);
+  useEffect(() => {
+    const previousFocus = document.activeElement;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    document.body.classList.add("detail-popup-open");
+    dialogRef.current?.querySelector('[aria-label="Close details"]')?.focus();
+    const onKeyDown = event => {
+      if (event.key === "Escape") { event.preventDefault(); onClose(); }
+      if (event.key !== "Tab") return;
+      const controls = [...dialogRef.current.querySelectorAll('button:not(:disabled), input:not(:disabled), select:not(:disabled), [tabindex="0"]')].filter(element => element.getClientRects().length);
+      const first = controls[0];
+      const last = controls.at(-1);
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+      if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = previousOverflow;
+      document.body.classList.remove("detail-popup-open");
+      previousFocus?.focus?.();
+    };
+  }, [onClose]);
+  return <div className="detail-popup-backdrop" onMouseDown={event => { if (event.target === event.currentTarget) onClose(); }}><section ref={dialogRef} className="detail-popup" role="dialog" aria-modal="true" aria-label={payload.title}><DetailPage payload={payload} onClose={onClose} /></section></div>;
+}
+
+function googleProvinceCode(province) {
+  const codes = { Central: "ZM-02", Copperbelt: "ZM-08", Eastern: "ZM-03", Luapula: "ZM-04", Lusaka: "ZM-09", Muchinga: "ZM-10", "North Western": "ZM-06", Northern: "ZM-05", Southern: "ZM-07", Western: "ZM-01" };
+  return codes[province] || googleProvinceName(province);
+}
+
+function DetailPage({ payload, onClose }) {
   const rows = payload.rows || [];
   const headers = rows.length ? Object.keys(rows[0]) : [];
   const [search, setSearch] = useState("");
@@ -1408,7 +1472,7 @@ function DetailPage({ payload }) {
           <p>{filtered.length.toLocaleString()} of {rows.length.toLocaleString()} records</p>
         </div>
         <div className="detail-actions">
-          <button type="button" className="detail-back" onClick={() => { window.location.hash = ""; }}>← Back to Dashboard</button>
+          {onClose ? <button type="button" className="detail-close" aria-label="Close details" title="Close details" onClick={onClose}><X size={20} /></button> : <button type="button" className="detail-back" onClick={() => { window.location.hash = ""; }}>Back to Dashboard</button>}
           <button type="button" onClick={() => window.print()}>Export PDF</button>
           <button type="button" onClick={() => downloadCsv(payload.title, filtered)}>Export CSV</button>
         </div>
@@ -1815,12 +1879,7 @@ function openDetailWindow(title, rows, columns) {
       return record;
     }, {});
   });
-  const key = `detail-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-  localStorage.setItem(key, JSON.stringify({ title, rows: normalizedRows }));
-  const detailUrl = new URL(window.location.href);
-  detailUrl.hash = `detail=${encodeURIComponent(key)}`;
-  const opened = window.open(detailUrl.href, "_blank");
-  if (!opened) window.location.hash = detailUrl.hash;
+  window.dispatchEvent(new CustomEvent("elmis:popup", { detail: { title, rows: normalizedRows } }));
 }
 
 function readDetailPayload() {
