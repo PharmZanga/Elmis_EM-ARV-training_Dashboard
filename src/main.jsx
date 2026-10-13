@@ -4,6 +4,8 @@ import { dashboardData } from "./dashboardData.js";
 import { linkTrainingToFacilities } from "./trainingLinkages.js";
 import { percent, count, reportingMetrics, groupedReportingMetrics } from "./reportingMetrics.js";
 import "./styles.css";
+import { LayoutDashboard, FileBarChart, Network, ListTodo, GraduationCap, Headphones, Newspaper, PanelLeftClose, PanelLeftOpen, Menu, X, RotateCcw, ArrowUpRight, ArrowDownRight, ExternalLink, Info, Building2, Clock3, Users, CircleAlert, MapPin, ChartNoAxesCombined } from "lucide-react";
+import "./controlTower.css";
 
 const { participants, reportingRows, timelinessRows, facilityMetadata = [], reportingUpdate = {} } = dashboardData;
 const reportingSeries = [
@@ -20,6 +22,8 @@ const menuItems = [
   ["helpdesk", "6", "Help Desk"],
   ["updates", "7", "Latest Updates"],
 ];
+const menuIcons = { executive: LayoutDashboard, reports: FileBarChart, training: Network, tasks: ListTodo, trainings: GraduationCap, helpdesk: Headphones, updates: Newspaper };
+const sectionTitles = { executive: "Executive overview", reports: "Facility reporting", training: "Training linkages", tasks: "Task follow-ups", trainings: "Training highlights", helpdesk: "Help desk", updates: "Latest updates" };
 
 const helpDeskContacts = [
   { province: "Central", firstName: "Bertha", lastName: "Khondowe", phone: "0974323833" },
@@ -50,7 +54,12 @@ function App() {
   useEffect(() => {
     const syncDetailPayload = () => setDetailPayload(readDetailPayload());
     window.addEventListener("hashchange", syncDetailPayload);
-    return () => window.removeEventListener("hashchange", syncDetailPayload);
+    const openRecords = event => openDetailWindow(event.detail.title, event.detail.rows, Object.keys(event.detail.rows[0] || {}));
+    window.addEventListener("elmis:detail", openRecords);
+    return () => {
+      window.removeEventListener("hashchange", syncDetailPayload);
+      window.removeEventListener("elmis:detail", openRecords);
+    };
   }, []);
 
   if (detailPayload) return <DetailPage payload={detailPayload} />;
@@ -65,6 +74,8 @@ function DashboardApp() {
   const defaultPeriod = reportingPeriods.at(-1) || "February 2026";
 
   const [activePage, setActivePage] = useState("executive");
+  const [navCollapsed, setNavCollapsed] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState(defaultPeriod);
   const [selectedProgram, setSelectedProgram] = useState("All");
   const [selectedProvince, setSelectedProvince] = useState("All");
@@ -152,16 +163,25 @@ function DashboardApp() {
   const monthlyTrends = useMemo(() => monthlyProgramTrends(reportingRows, selectedProvince, selectedDistrict, selectedProgram, selectedPeriod), [selectedProvince, selectedDistrict, selectedProgram, selectedPeriod]);
   const insights = useMemo(() => buildInsights(provinceTicker, statusRows, filteredParticipants, selectedProgram), [provinceTicker, statusRows, filteredParticipants, selectedProgram]);
   const priorityRows = useMemo(() => priorityActions(followUps, provinceTicker, filteredParticipants), [followUps, provinceTicker, filteredParticipants]);
+  const previousReporting = useMemo(() => {
+    const index = reportingPeriods.indexOf(selectedPeriod);
+    if (index < 1 || partialReporting) return null;
+    const previousPeriod = reportingPeriods[index - 1];
+    const rows = reportingRows.filter((row) => matchesFilters(row, previousPeriod, selectedProgram, selectedProvince, selectedDistrict));
+    if (!rows.length || rows.some((row) => row.nonReportingOnly)) return null;
+    return { ...reportingMetrics(rows), ...getFacilityReportingSemantics(rows), period: previousPeriod };
+  }, [selectedPeriod, selectedProgram, selectedProvince, selectedDistrict, partialReporting]);
 
   return (
-    <main>
+    <main className={`control-tower ${navCollapsed ? "nav-collapsed" : ""} ${mobileNavOpen ? "mobile-nav-open" : ""}`}>
       <header className="masthead">
         <div className="brand-row">
           <div className="brand-side">
+            <button className="icon-button mobile-menu" aria-label={mobileNavOpen ? "Close navigation" : "Open navigation"} aria-expanded={mobileNavOpen} onClick={() => setMobileNavOpen(!mobileNavOpen)}>{mobileNavOpen ? <X size={20} /> : <Menu size={20} />}</button>
             <div className="crest"><img src="./zambia-coat-of-arms.svg" alt="Zambia Coat of Arms" /></div>
             <div>
               <span className="eyebrow">Ministry of Health Zambia</span>
-              <h1>eLMIS EM, ARV and Laboratory Dashboard</h1>
+              <h1>eLMIS Reporting & Training</h1>
             </div>
           </div>
           <div className="tower-brand">
@@ -177,17 +197,20 @@ function DashboardApp() {
       <section className="page-shell">
         <aside className="sidebar">
           <nav className="side-menu" aria-label="Dashboard sections">
-            {menuItems.map(([key, number, label]) => (
-              <button key={key} className={activePage === key ? "active" : ""} onClick={() => setActivePage(key)}>
-                <b>{number}</b>
+            <div className="nav-caption"><span>WORKSPACE</span><button className="icon-button" title={navCollapsed ? "Expand navigation" : "Collapse navigation"} aria-label={navCollapsed ? "Expand navigation" : "Collapse navigation"} onClick={() => setNavCollapsed(!navCollapsed)}>{navCollapsed ? <PanelLeftOpen size={17} /> : <PanelLeftClose size={17} />}</button></div>
+            {menuItems.map(([key, number, label]) => {
+              const Icon = menuIcons[key];
+              return <button key={key} aria-label={`${number} ${label}`} aria-current={activePage === key ? "page" : undefined} title={navCollapsed ? label : undefined} className={activePage === key ? "active" : ""} onClick={() => { setActivePage(key); setMobileNavOpen(false); }}>
+                <Icon size={18} aria-hidden="true" />
                 <span>{label}</span>
-              </button>
-            ))}
+              </button>;
+            })}
+            <div className="nav-footer"><span className="live-dot" />National supply chain<span>Zambia · Ministry of Health</span></div>
           </nav>
         </aside>
 
         <section className="content">
-          <PageTicker activePage={activePage} totals={totals} participants={filteredParticipants} followUps={followUps} period={selectedPeriod} province={selectedProvince} />
+          <div className="workspace-heading"><div><span className="workspace-eyebrow">NSCCU / CONTROL TOWER</span><h2>{sectionTitles[activePage]}</h2></div><div className="dataset-stamp"><span className="live-dot" /><span>Reporting through <strong>{defaultPeriod}</strong></span></div></div>
           {!["helpdesk", "updates"].includes(activePage) && <>
             <div className="page-filters" aria-label="Dashboard filters">
               <FilterGroup title={isTrainingPage ? "Training through" : "Period"} items={periods} selected={selectedPeriod} onSelect={setSelectedPeriod} />
@@ -202,13 +225,9 @@ function DashboardApp() {
                 }}
               />
               <FilterGroup title="District" items={["All", ...districts]} selected={selectedDistrict} onSelect={setSelectedDistrict} />
+              <button className="icon-button filter-reset" title="Reset filters" aria-label="Reset filters" onClick={() => { setSelectedPeriod(periods.at(-1) || defaultPeriod); setSelectedProgram("All"); setSelectedProvince("All"); setSelectedDistrict("All"); }}><RotateCcw size={17} /></button>
             </div>
-            <div className="context-strip">
-              <span>{selectedPeriod}</span>
-              <span>{selectedProgram}</span>
-              <span>{selectedProvince === "All" ? "National" : selectedProvince}</span>
-              <span>{selectedDistrict === "All" ? "All Districts" : selectedDistrict}</span>
-            </div>
+            <details className="data-coverage"><summary><Info size={14} />Data coverage{!isTrainingPage && !filteredTimeliness.length ? " · Timeliness unavailable for this selection" : ""}</summary>
             {!isTrainingPage && partialReporting && (
               <div className="training-date-note" role="status">
                 <strong>Named non-reporting facilities are available for {selectedPeriod}.</strong>
@@ -231,9 +250,10 @@ function DashboardApp() {
                 <span>{undatedParticipants.length.toLocaleString()} record{undatedParticipants.length === 1 ? "" : "s"} excluded because the training date is blank or invalid.</span>
               </div>
             )}
+            </details>
           </>}
           {activePage === "executive" && <ExecutivePage totals={totals} statusRows={statusRows} participants={filteredParticipants} districtBars={districtBars} provinceTicker={provinceTicker} followUps={followUps} provinceCards={provinceCards} monthlyTrends={monthlyTrends} insights={insights} priorityRows={priorityRows} />}
-          {activePage === "reports" && <KpiPage totals={totals} statusRows={statusRows} districtBars={districtBars} submissionTrend={submissionTrend} provinceTicker={provinceTicker} provinceCards={provinceCards} monthlyTrends={monthlyTrends} insights={insights} />}
+          {activePage === "reports" && <KpiPage totals={totals} previousReporting={previousReporting} statusRows={statusRows} districtBars={districtBars} submissionTrend={submissionTrend} provinceTicker={provinceTicker} provinceCards={provinceCards} monthlyTrends={monthlyTrends} insights={insights} />}
           {activePage === "training" && <TrainingPage totals={totals} participants={filteredParticipants} facilityKpis={statusRows} />}
           {activePage === "tasks" && <TaskPage totals={totals} statusRows={statusRows} followUps={followUps} provinceTicker={provinceTicker} priorityRows={priorityRows} insights={insights} />}
           {activePage === "trainings" && <TrainingsPage totals={totals} participants={filteredParticipants} provinceCards={provinceCards} />}
@@ -381,12 +401,13 @@ function ExecutivePage({ totals, statusRows, participants, districtBars, provinc
 
       {executiveTab === "overview" && (
         <section className="grid executive-grid executive-tab-panel">
-          <Panel title="Executive Summary" className="summary-landscape compact-summary">
+          <details className="executive-summary">
+            <summary>Executive summary</summary>
             <div className="summary-copy">
               <p>The eLMIS EM, ARV and Laboratory Dashboard provides a national view of reporting performance, timeliness, reporting gaps and workforce capacity across Zambia's health supply chain. It helps managers identify facilities and districts requiring follow-up and supports evidence-based action.</p>
               <p>By bringing reporting and training indicators into one platform, the dashboard strengthens accountability, data visibility and targeted support for reliable logistics information and continuous availability of essential medicines and antiretroviral commodities.</p>
             </div>
-          </Panel>
+          </details>
           <Panel title="Zambia Provincial Performance" className="map-panel" detailRows={provinceCards} detailColumns={["province", "reportingRate", "reporting", "expected", "training"]}><ProvincePerformanceMap values={provinceCards} /></Panel>
           <Panel title="Priority Actions" className="priority-panel"><PriorityActionList rows={priorityRows} /></Panel>
           <Panel title="Top Reporting Districts"><BarChart values={districtBars.slice(0, 8)} max={100} suffix="%" /></Panel>
@@ -405,7 +426,8 @@ function ExecutivePage({ totals, statusRows, participants, districtBars, provinc
   );
 }
 
-function KpiPage({ totals, statusRows, districtBars, submissionTrend, provinceTicker, provinceCards, monthlyTrends, insights }) {
+function KpiPage({ totals, previousReporting, statusRows, districtBars, submissionTrend, provinceTicker, provinceCards, monthlyTrends, insights }) {
+  const [view, setView] = useState("overview");
   const facilityStatusRows = uniqueFacilityStatusRows(statusRows);
   const reportedRows = facilityStatusRows.filter((row) => row.status === "REPORTING");
   const nonReportingRows = statusRows.filter((row) => row.status === "NON_REPORTING");
@@ -417,6 +439,9 @@ function KpiPage({ totals, statusRows, districtBars, submissionTrend, provinceTi
     {
       label: "Reporting Rate",
       value: percent(totals.reportingRate),
+      meta: `${count(totals.reporting)} of ${count(totals.expected)} reports`,
+      change: previousReporting && Number.isFinite(totals.reportingRate) ? totals.reportingRate - previousReporting.reportingRate : null,
+      comparisonPeriod: previousReporting?.period,
       title: "Reporting Rate Full Details",
       rows: totals.reportingDetails,
       columns: ["province", "district", "facility", "program", "expected", "reported", "status", "reportingRate"],
@@ -424,6 +449,7 @@ function KpiPage({ totals, statusRows, districtBars, submissionTrend, provinceTi
     {
       label: "Facilities Reported",
       value: count(totals.facilitiesReported),
+      meta: `All selected programs submitted`,
       title: "Unique Facilities Reported Full Details",
       rows: reportedRows,
       columns: ["province", "district", "facility", "program", "status", "dateReceived"],
@@ -431,6 +457,8 @@ function KpiPage({ totals, statusRows, districtBars, submissionTrend, provinceTi
     {
       label: "Non-Reporting Facilities",
       value: totals.nonReportingFacilities,
+      meta: "At least one report outstanding",
+      tone: "critical",
       title: "Unique Non-Reporting Facility Details",
       rows: nonReportingRows,
       columns: ["province", "district", "facility", "program", "status"],
@@ -438,6 +466,7 @@ function KpiPage({ totals, statusRows, districtBars, submissionTrend, provinceTi
     {
       label: "Timeliness",
       value: percent(totals.timeliness),
+      meta: "On-time / expected district reports",
       title: "Reporting Timeliness Full Details",
       rows: totals.timelinessDetails,
       columns: ["province", "district", "program", "expected", "reportedOnTime", "reportedLate", "timeliness"],
@@ -445,6 +474,7 @@ function KpiPage({ totals, statusRows, districtBars, submissionTrend, provinceTi
     {
       label: totals.reportingRate === null ? "Affected Districts" : "Districts",
       value: totals.districts,
+      meta: "Districts in selected scope",
       title: "District Reporting Rate Details",
       rows: districtRows,
       columns: ["district", "reportingRate"],
@@ -455,14 +485,22 @@ function KpiPage({ totals, statusRows, districtBars, submissionTrend, provinceTi
     <>
       <KpiGrid items={reportCards} />
       <InsightStrip insights={insights} />
-      <section className="grid three">
+      <div className="view-tabs" role="tablist" aria-label="Reporting views">
+        <button role="tab" aria-selected={view === "overview"} onClick={() => setView("overview")}>Performance overview</button>
+        <button role="tab" aria-selected={view === "register"} onClick={() => setView("register")}>Facility register <span>{statusRows.length.toLocaleString()}</span></button>
+      </div>
+      {view === "register" && <section className="register-grid">
         <Panel title={statusRows.some((row) => row.nonReportingOnly) ? "Named Non-Reporting Facilities" : "Reporting Rate by Facility"} detailRows={statusRows} detailColumns={["province", "district", "facility", "program", "reportingRate", "status"]}><DataTable rows={statusRows} columns={["district", "facility", "program", "reportingRate"]} total={percent(totals.reportingRate)} /></Panel>
         <Panel title="Reporting Timeliness" detailRows={totals.timelinessDetails} detailColumns={["province", "district", "program", "expected", "reportedOnTime", "reportedLate", "timeliness"]}><DataTable rows={totals.timelinessDetails} columns={["district", "program", "expected", "reportedOnTime", "reportedLate", "timeliness"]} total={percent(totals.timeliness)} /></Panel>
-        <Panel title="Reporting Status" detailRows={statusRows} detailColumns={["province", "district", "facility", "status"]}><DataTable rows={statusRows} columns={["province", "district", "facility", "status"]} /></Panel>
+        <Panel title="Report submission distribution" detailRows={submissionTrend} detailColumns={["label", "value"]}><LineChart values={submissionTrend} /></Panel>
+      </section>}
+      {view === "overview" && <>
+      <section className="report-overview-grid">
         <Panel title="Facility Reporting vs Non-Reporting" detailRows={statusRows} detailColumns={["province", "district", "facility", "status"]}><Pie reporting={totals.facilitiesReported} nonReporting={totals.nonReportingFacilities} /></Panel>
-        <Panel title="Report Submission Distribution" detailRows={submissionTrend} detailColumns={["label", "value"]}><LineChart values={submissionTrend} /></Panel>
-        <Panel title="Reporting Rate by District" detailRows={districtRows} detailColumns={["district", "reportingRate"]}><BarChart values={districtBars.slice(0, 10)} max={100} suffix="%" /></Panel>
+        <Panel title="Leading districts" detailRows={districtRows} detailColumns={["district", "reportingRate"]}><div className="ranked-districts">{districtBars.slice(0, 6).map((row) => <div key={row.label}><span>{row.label}</span><div><i style={{width: `${row.value}%`}} /></div><strong>{percent(row.value)}</strong></div>)}</div></Panel>
       </section>
+      <ProvinceTicker values={provinceTicker} />
+      </>}
       <section className="map-trend-row">
         <Panel title="Zambia Provincial Performance" className="map-panel" detailRows={provinceCards} detailColumns={["province", "reportingRate", "reporting", "expected", "training"]}><ProvincePerformanceMap values={provinceCards} /></Panel>
         <Panel title="Monthly EM, ARV and Laboratory Reporting Trends" detailRows={monthlyTrends} detailColumns={["label", ...reportingSeries.filter((series) => monthlyTrends.some((row) => series.key in row)).map((series) => series.key)]}><MonthlyTrendChart values={monthlyTrends} /></Panel>
@@ -475,11 +513,11 @@ function TaskPage({ totals, statusRows, followUps, provinceTicker, priorityRows,
   return (
     <>
       <KpiGrid items={[
-        ["Open Follow-ups", followUps.nonReporting.length + followUps.lateDistricts.length],
-        ["Non-Reporting Facilities", totals.nonReportingFacilities],
-        ["Late Districts", totals.timelinessDetails.length ? followUps.lateDistricts.length : "N/A"],
-        ["Late Reports", totals.timelinessDetails.length ? followUps.lateReports : "N/A"],
-        ["Reporting Rate", percent(totals.reportingRate)],
+        { label: "Open Follow-ups", value: followUps.nonReporting.length + followUps.lateDistricts.length, rows: [...followUps.nonReporting, ...followUps.lateDistricts], columns: ["province", "district", "facility", "program", "reportedLate", "task"] },
+        { label: "Non-Reporting Facilities", value: totals.nonReportingFacilities, rows: followUps.nonReporting, columns: ["province", "district", "facility", "program", "task"] },
+        { label: "Late Districts", value: totals.timelinessDetails.length ? followUps.lateDistricts.length : "N/A", rows: followUps.lateDistricts, columns: ["province", "district", "program", "reportedLate", "task"] },
+        { label: "Late Reports", value: totals.timelinessDetails.length ? followUps.lateReports : "N/A", rows: followUps.lateDistricts, columns: ["province", "district", "program", "expected", "reportedLate", "task"] },
+        { label: "Reporting Rate", value: percent(totals.reportingRate), rows: totals.reportingDetails, columns: ["province", "district", "facility", "program", "status", "reportingRate"] },
       ]} />
       <InsightStrip insights={insights} />
       <ProvinceTicker values={provinceTicker} />
@@ -995,11 +1033,9 @@ function TrainingsPage({ totals, participants, provinceCards }) {
   return (
     <>
       <KpiGrid items={[
-        ["Total Trained", participants.length],
-        ["Experts Trained", totals.experts],
-        ["Superusers Trained", totals.superusers],
-        ["Users Trained", totals.users],
-        ["Training Districts", totals.trainingDistricts],
+        { label: "Total Trained", value: participants.length, rows: participants, columns: ["province", "district", "facility", "firstName", "lastName", "profession", "role"] },
+        ...[["Experts Trained", "Expert", totals.experts], ["Superusers Trained", "Superuser", totals.superusers], ["Users Trained", "User", totals.users]].map(([label, role, value]) => ({ label, value, rows: participants.filter(person => person.role === role), columns: ["province", "district", "facility", "firstName", "lastName", "profession", "role"] })),
+        { label: "Training Districts", value: totals.trainingDistricts, rows: Object.entries(groupBy(participants, "district")).map(([district, people]) => ({ district, province: people[0].province, trained: people.length })), columns: ["province", "district", "trained"] },
       ]} />
       <section className="training-hero panel">
         <div>
@@ -1085,10 +1121,13 @@ function KpiGrid({ items }) {
             onClick={clickable ? () => openDetailWindow(card.title || card.label, card.rows, card.columns) : undefined}
           >
             <div className="kpi-label-row">
-              {card.icon && <i className="kpi-icon" aria-hidden="true">{card.icon}</i>}
+              <KpiIcon label={card.label} />
               <span>{card.label}</span>
+              {clickable && <ExternalLink className="kpi-open" size={13} aria-hidden="true" />}
             </div>
-            <strong>{card.value}</strong>
+            <strong>{typeof card.value === "number" ? card.value.toLocaleString() : card.value}</strong>
+            {card.meta && <small className="kpi-meta">{card.meta}</small>}
+            {Number.isFinite(card.change) && <small className={`kpi-change ${card.change < 0 ? "decline" : "improve"}`}>{card.change < 0 ? <ArrowDownRight size={13} /> : <ArrowUpRight size={13} />}{Math.abs(card.change).toFixed(1)} pp vs {card.comparisonPeriod?.split(" ")[0].slice(0, 3)}</small>}
           </button>
         );
       })}
@@ -1096,10 +1135,16 @@ function KpiGrid({ items }) {
   );
 }
 
+function KpiIcon({ label }) {
+  const text = label.toLowerCase();
+  const Icon = /time|late/.test(text) ? Clock3 : /non-report|follow-up/.test(text) ? CircleAlert : /trained|user|expert|personnel/.test(text) ? Users : /district/.test(text) ? MapPin : /facilit/.test(text) ? Building2 : ChartNoAxesCombined;
+  return <Icon size={16} className="kpi-symbol" aria-hidden="true" />;
+}
+
 function Panel({ title, children, className = "", detailRows, detailColumns }) {
   const expandable = Array.isArray(detailRows) && Array.isArray(detailColumns);
   return <article className={`panel ${className}`.trim()}>
-    <div className="panel-heading"><h2>{title}</h2>{expandable && <button type="button" className="panel-expand" onClick={() => openDetailWindow(title, detailRows, detailColumns)}>Expand ↗</button>}</div>
+    <div className="panel-heading"><h2>{title}</h2>{expandable && <button type="button" className="panel-expand icon-button" title={`Open ${title} details`} aria-label={`Open ${title} details`} onClick={() => openDetailWindow(title, detailRows, detailColumns)}><ExternalLink size={16} /></button>}</div>
     {children}
   </article>;
 }
@@ -1319,7 +1364,7 @@ function googleProvinceName(province) {
 }
 
 function DataTable({ rows, columns, total }) {
-  const visibleRows = rows.slice(0, 250);
+  const visibleRows = rows.slice(0, 6);
   return (
     <div className="table-wrap">
       <table>
@@ -1335,30 +1380,41 @@ function DataTable({ rows, columns, total }) {
 function DetailPage({ payload }) {
   const rows = payload.rows || [];
   const headers = rows.length ? Object.keys(rows[0]) : [];
+  const [search, setSearch] = useState("");
+  const [sort, setSort] = useState({ column: "", direction: 1 });
+  const [page, setPage] = useState(0);
+  const filtered = rows.filter(row => Object.values(row).some(value => String(value ?? "").toLowerCase().includes(search.toLowerCase())));
+  if (sort.column) filtered.sort((a, b) => String(a[sort.column] ?? "").localeCompare(String(b[sort.column] ?? ""), undefined, { numeric: true }) * sort.direction);
+  const pages = Math.max(1, Math.ceil(filtered.length / 25));
+  const currentPage = Math.min(page, pages - 1);
   return (
     <main className="detail-page">
       <header className="detail-header">
         <div>
           <span className="eyebrow">eLMIS Detail View</span>
           <h1>{payload.title}</h1>
-          <p>{rows.length.toLocaleString()} record{rows.length === 1 ? "" : "s"}</p>
+          <p>{filtered.length.toLocaleString()} of {rows.length.toLocaleString()} records</p>
         </div>
         <div className="detail-actions">
           <button type="button" className="detail-back" onClick={() => { window.location.hash = ""; }}>← Back to Dashboard</button>
           <button type="button" onClick={() => window.print()}>Export PDF</button>
-          <button type="button" onClick={() => downloadCsv(payload.title, rows)}>Export CSV</button>
+          <button type="button" onClick={() => downloadCsv(payload.title, filtered)}>Export CSV</button>
         </div>
       </header>
-      <section className="detail-table-wrap">
+      <label className="detail-search">Search records<input type="search" value={search} onChange={event => { setSearch(event.target.value); setPage(0); }} /></label>
+      <section className="detail-table-wrap detail-screen-table">
         <table>
-          <thead><tr>{headers.map((header) => <th key={header}>{header}</th>)}</tr></thead>
+          <thead><tr>{headers.map((header) => <th key={header}><button type="button" onClick={() => { setSort({ column: header, direction: sort.column === header ? -sort.direction : 1 }); setPage(0); }}>{header}{sort.column === header ? (sort.direction === 1 ? " ↑" : " ↓") : ""}</button></th>)}</tr></thead>
           <tbody>
-            {rows.map((row, index) => (
+            {filtered.slice(currentPage * 25, (currentPage + 1) * 25).map((row, index) => (
               <tr key={index}>{headers.map((header) => <td key={header}>{row[header]}</td>)}</tr>
             ))}
           </tbody>
         </table>
       </section>
+      {!filtered.length && <p className="empty-state">No matching records.</p>}
+      <nav className="detail-pagination" aria-label="Record pages"><button disabled={currentPage === 0} onClick={() => setPage(currentPage - 1)}>Previous</button><span>Page {currentPage + 1} of {pages}</span><button disabled={currentPage + 1 >= pages} onClick={() => setPage(currentPage + 1)}>Next</button></nav>
+      <table className="detail-print-table"><thead><tr>{headers.map(header => <th key={header}>{header}</th>)}</tr></thead><tbody>{filtered.map((row, index) => <tr key={index}>{headers.map(header => <td key={header}>{row[header]}</td>)}</tr>)}</tbody></table>
     </main>
   );
 }
@@ -1397,7 +1453,12 @@ function LineChart({ values }) {
 }
 
 function MonthlyTrendChart({ values }) {
+  const [hidden, setHidden] = useState([]);
+  const [hovered, setHovered] = useState("");
   const series = reportingSeries.filter((item) => values.some((row) => item.key in row));
+  const active = series.filter(item => !hidden.includes(item.key));
+  const x = index => 44 + index / Math.max(values.length - 1, 1) * 570;
+  const y = rate => 230 - rate * 2;
   if (!values.some((row) => series.some((item) => Number.isFinite(row[item.key])))) return <div className="empty-state">Reporting data was not supplied for this selection.</div>;
   const toSegments = (key) => {
     const segments = [];
@@ -1408,7 +1469,7 @@ function MonthlyTrendChart({ values }) {
         points = [];
         return;
       }
-      points.push(`${(index / Math.max(values.length - 1, 1)) * 100},${94 - item[key] / 100 * 84}`);
+      points.push(`${x(index)},${y(item[key])}`);
     });
     if (points.length) segments.push(points.join(" "));
     return segments;
@@ -1417,13 +1478,15 @@ function MonthlyTrendChart({ values }) {
   return (
     <div className="trend-wrap">
       <div className="trend-legend">
-        {series.map((item) => <span key={item.key}><i style={{ background: item.color }} />{item.label}</span>)}
+        {series.map((item) => <button type="button" key={item.key} aria-pressed={!hidden.includes(item.key)} onClick={() => setHidden(hidden.includes(item.key) ? hidden.filter(key => key !== item.key) : [...hidden, item.key])}><i style={{ background: item.color }} />{item.label}</button>)}
       </div>
-      <svg className="trend-chart" viewBox="0 0 100 100" preserveAspectRatio="none">
-        {series.flatMap((item) => toSegments(item.key).map((points, index) => <polyline key={`${item.key}-${index}`} points={points} style={{ stroke: item.color }} />))}
-        {series.flatMap((item) => values.map((value, index) => Number.isFinite(value[item.key]) && <circle key={`${item.key}-${index}`} cx={(index / Math.max(values.length - 1, 1)) * 100} cy={94 - value[item.key] / 100 * 84} r="0.8" fill={item.color}><title>{value.label}: {item.label} {percent(value[item.key])}</title></circle>))}
+      <svg className="trend-chart" viewBox="0 0 640 280" role="img" aria-label="Monthly reporting rate by program">
+        {[0, 25, 50, 75, 100].map(rate => <g key={rate}><line className="trend-gridline" x1="44" x2="614" y1={y(rate)} y2={y(rate)} /><text x="34" y={y(rate) + 4} textAnchor="end">{rate}%</text></g>)}
+        {active.flatMap((item) => toSegments(item.key).map((points, index) => <polyline className="trend-line" key={`${item.key}-${index}`} points={points} style={{ stroke: item.color }} />))}
+        {active.flatMap((item) => values.map((value, index) => Number.isFinite(value[item.key]) && <circle tabIndex="0" aria-label={`${value.label}: ${item.label} ${percent(value[item.key])}`} onMouseEnter={() => setHovered(`${value.label}: ${item.label} ${percent(value[item.key])}`)} onFocus={() => setHovered(`${value.label}: ${item.label} ${percent(value[item.key])}`)} key={`${item.key}-${index}`} cx={x(index)} cy={y(value[item.key])} r="3" fill={item.color}><title>{value.label}: {item.label} {percent(value[item.key])}</title></circle>))}
+        {values.map((item, index) => <text key={item.label} x={x(index)} y="255" textAnchor="middle">{item.label}</text>)}
       </svg>
-      <div className="chart-axis">{values.map((item) => <span key={item.label}>{item.label}</span>)}</div>
+      <div className="trend-tooltip" aria-live="polite">{active.length ? hovered : "No series selected"}</div>
       {values.some((row) => series.some((item) => row[item.key] === null)) && <p className="table-note">Gaps indicate months without full reporting totals.</p>}
     </div>
   );
@@ -1742,7 +1805,10 @@ function openDetailWindow(title, rows, columns) {
   });
   const key = `detail-${Date.now()}-${Math.random().toString(16).slice(2)}`;
   localStorage.setItem(key, JSON.stringify({ title, rows: normalizedRows }));
-  window.location.hash = `detail=${encodeURIComponent(key)}`;
+  const detailUrl = new URL(window.location.href);
+  detailUrl.hash = `detail=${encodeURIComponent(key)}`;
+  const opened = window.open(detailUrl.href, "_blank");
+  if (!opened) window.location.hash = detailUrl.hash;
 }
 
 function readDetailPayload() {
