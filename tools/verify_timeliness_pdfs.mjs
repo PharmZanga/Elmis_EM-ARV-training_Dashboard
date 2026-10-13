@@ -27,8 +27,9 @@ months.forEach((month, index) => {
 });
 const januaryMwandi = data.timelinessRows.find(row => isImported(row) && row.period === "January 2026" && row.district === "Mwandi");
 assert.deepEqual([januaryMwandi.expected, januaryMwandi.reportedOnTime, januaryMwandi.reportedLate], [14, 6, 8]);
-const previousText = execFileSync("git", ["show", "65ffd6f:src/dashboardData.js"], { encoding: "utf8", maxBuffer: 100_000_000 });
+const previousText = execFileSync("git", ["show", "aef32d6:src/dashboardData.js"], { encoding: "utf8", maxBuffer: 100_000_000 });
 const previous = JSON.parse(previousText.split("export const dashboardData = ")[1].trim().replace(/;$/, ""));
 for (const field of ["reportingRows", "participants", "facilityMetadata"]) assert.deepEqual(data[field], previous[field], `${field} unchanged`);
-assert.deepEqual(data.timelinessRows.filter(row => !isImported(row)), previous.timelinessRows.filter(row => !isImported(row)), "September, ARV, LAB and 2025 timeliness unchanged");
-console.log("Verified 928 EM district-month records, eight PDF controls, weighted rates, source provenance, and unchanged September/ARV/LAB/reporting/training data.");
+const preserved = row => isImported(row) || !months.some(month => row.period === `${month} 2026`);
+assert.deepEqual(data.timelinessRows.filter(preserved), previous.timelinessRows.filter(preserved), "EM, September and 2025 timeliness unchanged");
+console.log("Verified 928 EM district-month records, eight PDF controls, weighted rates, source provenance, and unchanged EM/September/history/reporting/training data.");

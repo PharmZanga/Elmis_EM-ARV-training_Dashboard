@@ -34,16 +34,16 @@ assert.equal(percent(reportingMetrics(september).reportingRate), "88.8%");
 assert.equal(reportingMetrics(september).reporting, 5304);
 assert.equal(groupedReportingMetrics(september, [], "province", false).length, 10);
 assert.equal(groupedReportingMetrics(september, [], "district", false).length, 116);
-const labTimely = data.timelinessRows.filter((r) => r.program === "Laboratory Commodities");
+const labTimely = data.timelinessRows.filter((r) => r.program === "Laboratory Commodities" && r.period === "September 2026");
 assert.equal(labTimely.length, 109);
 assert.ok(labTimely.every((r) => r.period === "September 2026"));
 assert.equal(labTimely.reduce((sum, r) => sum + r.expected, 0), 627);
 assert.equal(labTimely.reduce((sum, r) => sum + r.reportedOnTime, 0), 533);
 assert.equal(labTimely.reduce((sum, r) => sum + r.reportedLate, 0), 0);
-for (const month of ["May", "June", "July", "August"]) {
+for (const [month, expectedRows] of [["May", 340], ["June", 341], ["July", 341], ["August", 344]]) {
   const imported = data.timelinessRows.filter((r) => r.period === `${month} 2026`);
-  assert.equal(imported.length, 116);
-  assert.ok(imported.every((r) => r.program === "Essential Medicine"));
+  assert.equal(imported.length, expectedRows);
+  assert.equal(new Set(imported.map(r => r.program)).size, 3);
 }
 assert.equal(percent(null), "N/A");
 assert.equal(percent(0), "0.0%");
@@ -53,6 +53,6 @@ const previous = JSON.parse(previousText.split("export const dashboardData = ")[
 assert.deepEqual(data.participants, previous.participants, "Training records preserved");
 assert.deepEqual(data.facilityMetadata, previous.facilityMetadata, "Facility metadata preserved");
 assert.deepEqual(data.reportingRows.filter((r) => !r.period.endsWith("2026")), previous.reportingRows.filter((r) => !r.period.endsWith("2026")), "2025 reporting preserved");
-const retainedTimeliness = r => r.program !== "Laboratory Commodities" && !(r.program === "Essential Medicine" && months.slice(0, 8).some(month => r.period === `${month} 2026`));
-assert.deepEqual(data.timelinessRows.filter(retainedTimeliness), previous.timelinessRows.filter(retainedTimeliness), "ARV, September and earlier EM timeliness preserved");
+const retainedTimeliness = r => r.program !== "Laboratory Commodities" && !months.slice(0, 8).some(month => r.period === `${month} 2026`);
+assert.deepEqual(data.timelinessRows.filter(retainedTimeliness), previous.timelinessRows.filter(retainedTimeliness), "September and earlier-year EM/ARV timeliness preserved");
 console.log("Verified 53,757 EM/ARV/LAB status records, 27 monthly source controls, September Laboratory timeliness, EM PDF coverage and preserved training/history.");
