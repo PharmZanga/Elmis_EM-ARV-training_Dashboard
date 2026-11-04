@@ -28,6 +28,9 @@
 .control-tower .nav-footer { margin-top: auto; padding: 18px 10px 0; border-top: 1px solid var(--line); font-size: 10px; color: #698173; align-self: end; }
 .control-tower .nav-footer > span:last-child { display: block; padding-top: 6px; font-size: 10px; font-weight: 400; }
 .live-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #2b9360; margin-right: 6px; flex: 0 0 auto; }
+.elmis-dqa-workspace iframe { width: 100%; min-height: 1500px; height: calc(100vh - 180px); border: 1px solid #d4e5da; border-radius: 12px; background: #eff7f2; display: block; }
+.elmis-dqa-open { font-size: 12px; margin-top: 12px; }
+.elmis-dqa-open a { color: #0b5d3b; }
 .control-tower .content { padding: 28px 28px 40px; }
 .workspace-heading { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-bottom: 24px; }
 .workspace-eyebrow { color: #8a978f; font-size: 9px; font-weight: 600; }

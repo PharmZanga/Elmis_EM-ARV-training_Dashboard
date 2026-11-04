@@ -23,9 +23,10 @@ const menuItems = [
   ["trainings", "5", "Trainings"],
   ["helpdesk", "6", "Help Desk"],
   ["updates", "7", "Latest Updates"],
+  ["elmis-dqa", "8", "eLMIS DQA"],
 ];
-const menuIcons = { executive: LayoutDashboard, reports: FileBarChart, training: Network, tasks: ListTodo, trainings: GraduationCap, helpdesk: Headphones, updates: Newspaper };
-const sectionTitles = { executive: "Executive overview", reports: "Facility reporting", training: "Training linkages", tasks: "Task follow-ups", trainings: "Training highlights", helpdesk: "Help desk", updates: "Latest updates" };
+const menuIcons = { executive: LayoutDashboard, reports: FileBarChart, training: Network, tasks: ListTodo, trainings: GraduationCap, helpdesk: Headphones, updates: Newspaper, "elmis-dqa": FileBarChart };
+const sectionTitles = { executive: "Executive overview", reports: "Facility reporting", training: "Training linkages", tasks: "Task follow-ups", trainings: "Training highlights", helpdesk: "Help desk", updates: "Latest updates", "elmis-dqa": "DQA 4 — eLMIS DQA" };
 
 const helpDeskContacts = [
   { province: "Central", firstName: "Bertha", lastName: "Khondowe", phone: "0974323833" },
@@ -81,7 +82,12 @@ function DashboardApp() {
   const provinces = useMemo(() => unique(reportingRows.map((row) => row.province)).sort(), []);
   const defaultPeriod = reportingPeriods.at(-1) || "February 2026";
 
-  const [activePage, setActivePage] = useState("executive");
+  const [activePage, setActivePage] = useState(() => window.location.hash === "#elmis-dqa" ? "elmis-dqa" : "executive");
+  useEffect(() => {
+    const syncDqaPage = () => { if (window.location.hash === "#elmis-dqa") setActivePage("elmis-dqa"); };
+    window.addEventListener("hashchange", syncDqaPage);
+    return () => window.removeEventListener("hashchange", syncDqaPage);
+  }, []);
   const [navCollapsed, setNavCollapsed] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState(defaultPeriod);
@@ -223,7 +229,7 @@ function DashboardApp() {
             <div className="nav-caption"><span>WORKSPACE</span><button className="icon-button" title={navCollapsed ? "Expand navigation" : "Collapse navigation"} aria-label={navCollapsed ? "Expand navigation" : "Collapse navigation"} onClick={() => setNavCollapsed(!navCollapsed)}>{navCollapsed ? <PanelLeftOpen size={17} /> : <PanelLeftClose size={17} />}</button></div>
             {menuItems.map(([key, number, label]) => {
               const Icon = menuIcons[key];
-              return <button key={key} aria-label={`${number} ${label}`} aria-current={activePage === key ? "page" : undefined} title={navCollapsed ? label : undefined} className={activePage === key ? "active" : ""} onClick={() => { setActivePage(key); setMobileNavOpen(false); }}>
+              return <button key={key} aria-label={`${number} ${label}`} aria-current={activePage === key ? "page" : undefined} title={navCollapsed ? label : undefined} className={activePage === key ? "active" : ""} onClick={() => { setActivePage(key); setMobileNavOpen(false); if (key === "elmis-dqa") window.history.replaceState(null, "", "#elmis-dqa"); else if (window.location.hash === "#elmis-dqa") window.history.replaceState(null, "", window.location.pathname + window.location.search); }}>
                 <Icon size={18} aria-hidden="true" />
                 <span>{label}</span>
               </button>;
@@ -233,8 +239,8 @@ function DashboardApp() {
         </aside>
 
         <section className="content">
-          <div className="workspace-heading"><div><span className="workspace-eyebrow">NSCCU / CONTROL TOWER</span><h2>{sectionTitles[activePage]}</h2></div><div className="dataset-stamp"><span className="live-dot" /><span>Reporting through <strong>{defaultPeriod}</strong></span></div></div>
-          {!["helpdesk", "updates"].includes(activePage) && <>
+          <div className="workspace-heading"><div><span className="workspace-eyebrow">NSCCU / CONTROL TOWER</span><h2>{sectionTitles[activePage]}</h2></div>{activePage !== "elmis-dqa" && <div className="dataset-stamp"><span className="live-dot" /><span>Reporting through <strong>{defaultPeriod}</strong></span></div>}</div>
+          {!["helpdesk", "updates", "elmis-dqa"].includes(activePage) && <>
             <div className="page-filters" aria-label="Dashboard filters">
               <FilterGroup title={isTrainingPage ? "Training through" : "Period"} items={periods} selected={selectedPeriod} onSelect={setSelectedPeriod} />
               <FilterGroup title="Program" items={["All", ...programs]} selected={selectedProgram} onSelect={setSelectedProgram} />
@@ -282,6 +288,7 @@ function DashboardApp() {
           {activePage === "trainings" && <TrainingsPage totals={totals} participants={filteredParticipants} provinceCards={provinceCards} />}
           {activePage === "helpdesk" && <HelpDeskPage />}
           {activePage === "updates" && <LatestUpdatesPage />}
+          {activePage === "elmis-dqa" && <section className="elmis-dqa-workspace" aria-label="eLMIS DQA dashboard"><iframe title="DQA 4 eLMIS facility supervision dashboard" src="./elmis-dqa.html?embedded=1" /><p className="elmis-dqa-open"><a href="./elmis-dqa.html">Open eLMIS DQA in a full page</a></p></section>}
         </section>
       </section>
     </main>
