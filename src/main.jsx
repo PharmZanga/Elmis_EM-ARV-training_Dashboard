@@ -288,11 +288,26 @@ function DashboardApp() {
           {activePage === "trainings" && <TrainingsPage totals={totals} participants={filteredParticipants} provinceCards={provinceCards} />}
           {activePage === "helpdesk" && <HelpDeskPage />}
           {activePage === "updates" && <LatestUpdatesPage />}
-          {activePage === "elmis-dqa" && <section className="elmis-dqa-workspace" aria-label="eLMIS DQA dashboard"><iframe title="DQA 4 eLMIS facility supervision dashboard" src="./elmis-dqa.html?embedded=1" /><p className="elmis-dqa-open"><a href="./elmis-dqa.html">Open eLMIS DQA in a full page</a></p></section>}
+          {activePage === "elmis-dqa" && <ElmisDqaWorkspace />}
         </section>
       </section>
     </main>
   );
+}
+
+function ElmisDqaWorkspace() {
+  const frame = useRef(null);
+  const [height, setHeight] = useState(900);
+  useEffect(() => {
+    const resize = event => {
+      if (event.origin !== window.location.origin || event.source !== frame.current?.contentWindow || event.data?.type !== "elmis-dqa:height") return;
+      const next = Number(event.data.height);
+      if (Number.isFinite(next)) setHeight(Math.max(600, Math.min(20000, next)));
+    };
+    window.addEventListener("message", resize);
+    return () => window.removeEventListener("message", resize);
+  }, []);
+  return <section className="elmis-dqa-workspace" aria-label="eLMIS DQA dashboard"><iframe ref={frame} title="DQA 4 eLMIS facility supervision dashboard" src="./elmis-dqa.html?embedded=1" style={{height}} /><p className="elmis-dqa-open"><a href="./elmis-dqa.html">Open eLMIS DQA in a full page</a></p></section>;
 }
 
 function reportWasSubmitted(row) {
