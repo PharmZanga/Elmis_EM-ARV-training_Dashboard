@@ -8,6 +8,7 @@ import { LayoutDashboard, FileBarChart, Network, ListTodo, GraduationCap, Headph
 import "./controlTower.css";
 import ManagementInsights from "./ManagementInsights.jsx";
 import { missingHistory } from "./managementMetrics.js";
+import "./referenceTheme.css";
 
 const { participants, reportingRows, timelinessRows, facilityMetadata = [], reportingUpdate = {} } = dashboardData;
 const reportingSeries = [
